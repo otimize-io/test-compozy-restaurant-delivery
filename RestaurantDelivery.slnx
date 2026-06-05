@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/Bootstrap/Bootstrap.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Bootstrap.Tests/Bootstrap.Tests.csproj" />
+  </Folder>
+</Solution>

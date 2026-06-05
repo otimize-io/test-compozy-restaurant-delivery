@@ -1,0 +1,25 @@
+# .NET
+bin/
+obj/
+*.user
+artifacts/
+[Tt]est[Rr]esults/
+*.coverage
+*.cobertura.xml
+coverage*.json
+
+# Angular / Node
+node_modules/
+src/Web/dist/
+src/Web/.angular/
+
+# IDE
+.vs/
+.vscode/*
+!.vscode/extensions.json
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Docker volumes (none committed)
