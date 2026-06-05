@@ -2,8 +2,10 @@
   <Folder Name="/src/" />
   <Folder Name="/src/Shared/">
     <Project Path="src/Shared/Bootstrap/Bootstrap.csproj" />
+    <Project Path="src/Shared/Contracts/Contracts.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Bootstrap.Tests/Bootstrap.Tests.csproj" />
+    <Project Path="tests/Contracts.Tests/Contracts.Tests.csproj" />
   </Folder>
 </Solution>

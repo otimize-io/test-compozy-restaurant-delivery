@@ -5,7 +5,7 @@
 | # | Title | Status | Complexity | Dependencies |
 |---|-------|--------|------------|--------------|
 | 01 | Solution scaffolding & infrastructure compose | completed | medium | — |
-| 02 | Shared Contracts library (events/commands) | pending | medium | task_01 |
+| 02 | Shared Contracts library (events/commands) | completed | medium | task_01 |
 | 03 | Shared Platform library (messaging, logging, correlation, health) | pending | medium | task_01, task_02 |
 | 04 | Catalog service (MongoDB) + seed | pending | medium | task_03 |
 | 05 | Search service (Elasticsearch) | pending | medium | task_03, task_04 |

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Shared Contracts library (events/commands)
 type: backend
 complexity: medium
@@ -30,10 +30,10 @@ the single cross-service coupling point and is referenced by every service and t
 </requirements>
 
 ## Subtasks
-- [ ] 2.1 Define the integration event record types from the TechSpec event list.
-- [ ] 2.2 Define the command record types (`CapturePayment`, `RefundPayment`, `RequestDriver`).
-- [ ] 2.3 Add correlation/order identifiers and the payment idempotency key field.
-- [ ] 2.4 Package as a referenced library and confirm it has no dependency on any service project.
+- [x] 2.1 Define the integration event record types from the TechSpec event list.
+- [x] 2.2 Define the command record types (`CapturePayment`, `RefundPayment`, `RequestDriver`).
+- [x] 2.3 Add correlation/order identifiers and the payment idempotency key field.
+- [x] 2.4 Package as a referenced library and confirm it has no dependency on any service project.
 
 ## Implementation Details
 Create the contract types under `src/Shared/Contracts/`. Reference TechSpec "Data Models →
@@ -57,11 +57,11 @@ Integration events". Keep these as plain message records (DTOs) only — no beha
 
 ## Tests
 - Unit tests:
-  - [ ] Every event/command record round-trips through the configured JSON serializer with no field loss.
-  - [ ] `OrderPlaced` carries both `OrderId` and `CorrelationId`.
-  - [ ] `CapturePayment` carries a non-empty `IdempotencyKey` field.
+  - [x] Every event/command record round-trips through the configured JSON serializer with no field loss.
+  - [x] `OrderPlaced` carries both `OrderId` and `CorrelationId`.
+  - [x] `CapturePayment` carries a non-empty `IdempotencyKey` field.
 - Integration tests:
-  - [ ] A published `OrderPlaced` is received with an identical payload via an in-memory MassTransit test harness.
+  - [x] A published `OrderPlaced` is received with an identical payload via an in-memory MassTransit test harness.
 - Test coverage target: >=80%
 - All tests must pass
 
