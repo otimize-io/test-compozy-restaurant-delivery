@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Shared Platform library (messaging, logging, correlation, health)
 type: backend
 complexity: medium
@@ -33,11 +33,15 @@ boilerplate from each service task.
 </requirements>
 
 ## Subtasks
-- [ ] 3.1 Implement the MassTransit + RabbitMQ configuration helper.
-- [ ] 3.2 Implement Serilog logging with the correlation-ID enricher and HTTP/message middleware.
-- [ ] 3.3 Implement the `/health` registration helper.
-- [ ] 3.4 Implement the idempotent-consumer helper.
-- [ ] 3.5 Provide a common host builder used by all services.
+- [x] 3.1 Implement the MassTransit + RabbitMQ configuration helper.
+- [x] 3.2 Implement Serilog logging with the correlation-ID enricher and HTTP/message middleware.
+- [x] 3.3 Implement the `/health` registration helper.
+- [x] 3.4 Implement the idempotent-consumer helper.
+- [x] 3.5 Provide a common host builder used by all services.
+
+> Follow-up: correlation is propagated at the HTTP boundary (`CorrelationIdMiddleware`) and onto the
+> Serilog `LogContext`. Propagating the same id across **message** boundaries via a MassTransit filter
+> is deferred (MassTransit already carries its own `CorrelationId`/`ConversationId` on messages).
 
 ## Implementation Details
 Create the helpers under `src/Shared/Platform/`. Reference TechSpec "Inter-Service Communication" and
@@ -62,11 +66,11 @@ Create the helpers under `src/Shared/Platform/`. Reference TechSpec "Inter-Servi
 
 ## Tests
 - Unit tests:
-  - [ ] The correlation middleware adds an incoming `X-Correlation-ID` to the Serilog log context.
-  - [ ] A request without a correlation ID gets a newly generated GUID.
-  - [ ] The idempotency helper returns the cached result for a repeated `(orderId, correlationId)` and executes only once.
+  - [x] The correlation middleware adds an incoming `X-Correlation-ID` to the Serilog log context.
+  - [x] A request without a correlation ID gets a newly generated GUID.
+  - [x] The idempotency helper returns the cached result for a repeated `(orderId, correlationId)` and executes only once.
 - Integration tests:
-  - [ ] A service built via the host builder connects to RabbitMQ and serves a healthy `/health` (Testcontainers RabbitMQ).
+  - [x] A service built via the host builder connects to RabbitMQ and serves a healthy `/health` (Testcontainers RabbitMQ).
 - Test coverage target: >=80%
 - All tests must pass
 
