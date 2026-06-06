@@ -8,8 +8,8 @@
 | 02 | Shared Contracts library (events/commands) | completed | medium | task_01 |
 | 03 | Shared Platform library (messaging, logging, correlation, health) | completed | medium | task_01, task_02 |
 | 04 | Catalog service (MongoDB) + seed | completed | medium | task_03 |
-| 05 | Search service (Elasticsearch) | pending | medium | task_03, task_04 |
-| 06 | Order service & saga skeleton (PostgreSQL + outbox) | pending | high | task_03 |
+| 05 | Search service (Elasticsearch) | completed | medium | task_03, task_04 |
+| 06 | Order service & saga skeleton (PostgreSQL + outbox) | completed | high | task_03 |
 | 07 | Payment service (async-shaped mock + swap-contract test) | completed | high | task_03 |
 | 08 | Restaurant order flow (accept/ready + saga transitions) | pending | medium | task_06 |
 | 09 | Dispatch service (nearest-available mock, Redis) | completed | medium | task_03 |

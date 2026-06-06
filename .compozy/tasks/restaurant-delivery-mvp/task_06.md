@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Order service & saga skeleton (PostgreSQL + outbox)
 type: backend
 complexity: high
@@ -32,11 +32,11 @@ with a transactional outbox for reliable event publishing.
 </requirements>
 
 ## Subtasks
-- [ ] 6.1 Define the order aggregate + EF Core persistence + transactional outbox.
-- [ ] 6.2 Implement `POST /api/orders` (creates the order, emits `OrderPlaced`) and `GET /api/orders/{id}`.
-- [ ] 6.3 Implement the saga state machine across the happy-path states (Placed→AwaitingPayment→Paid→Accepted→Preparing→ReadyForPickup→DriverAssigned→PickedUp→Delivered).
-- [ ] 6.4 Issue `CapturePayment` and transition on `PaymentSettled`/`PaymentDeclined`.
-- [ ] 6.5 Make all event consumers idempotent on `(orderId, correlationId)`.
+- [x] 6.1 Define the order aggregate + EF Core persistence + transactional outbox.
+- [x] 6.2 Implement `POST /api/orders` (creates the order, emits `OrderPlaced`) and `GET /api/orders/{id}`.
+- [x] 6.3 Implement the saga state machine across the happy-path states (Placed→AwaitingPayment→Paid→Accepted→Preparing→ReadyForPickup→DriverAssigned→PickedUp→Delivered).
+- [x] 6.4 Issue `CapturePayment` and transition on `PaymentSettled`/`PaymentDeclined`.
+- [x] 6.5 Make all event consumers idempotent on `(orderId, correlationId)`.
 
 ## Implementation Details
 Create the service under `src/Services/Order/`. Reference TechSpec "Core Interfaces" (`OrderStatus`),
@@ -65,13 +65,20 @@ payment/placement legs and leaves the others as defined transition points.
 
 ## Tests
 - Unit tests:
-  - [ ] `POST /api/orders` with a valid cart creates an order in `Placed` and emits `OrderPlaced`.
-  - [ ] The saga transitions `AwaitingPayment → Paid` on `PaymentSettled` and issues no driver request yet.
-  - [ ] A duplicate `PaymentSettled` for the same `(orderId, correlationId)` is ignored (idempotent).
-  - [ ] `GET /api/orders/{id}` returns the current `OrderStatus`.
+  - [x] `POST /api/orders` with a valid cart creates an order in `Placed` and emits `OrderPlaced`.
+  - [x] The saga transitions `AwaitingPayment → Paid` on `PaymentSettled` and issues no driver request yet.
+  - [x] A duplicate `PaymentSettled` for the same `(orderId, correlationId)` is ignored (idempotent).
+  - [x] `GET /api/orders/{id}` returns the current `OrderStatus`.
 - Integration tests:
-  - [ ] Placing an order persists it to PostgreSQL and publishes `OrderPlaced` via the outbox (Testcontainers).
-  - [ ] The saga reaches `Paid` end-to-end when a `PaymentSettled` event is delivered through the broker.
+  - [x] Placing an order persists it to PostgreSQL and publishes `OrderPlaced` via the outbox (Testcontainers).
+  - [x] The saga reaches `Paid` end-to-end when a `PaymentSettled` event is delivered through the broker.
+
+> Done: 29 tests (saga harness through Delivered, order service, status map, endpoints, + Postgres
+> Testcontainers); coverage 97.31%. MassTransit state machine + EF Core saga repository + transactional
+> outbox. The saga reacts to the FULL happy-path events, so tasks 08/10 only add the triggering
+> endpoints and task_11 adds the `DriverUnavailable` compensation branch.
+> Integration fix: the saga publishes the **DriverRequested event** (what Dispatch/task_09 consumes),
+> reconciling the redundant RequestDriver-command vs DriverRequested-event pair in Contracts.
 - Test coverage target: >=80%
 - All tests must pass
 

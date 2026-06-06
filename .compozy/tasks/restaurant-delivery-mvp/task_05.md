@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Search service (Elasticsearch)
 type: backend
 complexity: medium
@@ -31,10 +31,10 @@ journey.
 </requirements>
 
 ## Subtasks
-- [ ] 5.1 Consume the catalog-available event and index restaurants into Elasticsearch.
-- [ ] 5.2 Implement the search endpoint (name/cuisine/location query).
-- [ ] 5.3 Handle the no-match case as an empty result set.
-- [ ] 5.4 Wire Platform host, logging, and health.
+- [x] 5.1 Consume the catalog-available event and index restaurants into Elasticsearch.
+- [x] 5.2 Implement the search endpoint (name/cuisine/location query).
+- [x] 5.3 Handle the no-match case as an empty result set.
+- [x] 5.4 Wire Platform host, logging, and health.
 
 ## Implementation Details
 Create the service under `src/Services/Search/`. Reference TechSpec "API Endpoints"
@@ -59,11 +59,16 @@ do not read Catalog's database directly (ADR-004).
 
 ## Tests
 - Unit tests:
-  - [ ] A query matching a seeded restaurant name returns that restaurant.
-  - [ ] A query by cuisine returns all restaurants of that cuisine.
-  - [ ] A query with no matches returns an empty array and HTTP 200.
+  - [x] A query matching a seeded restaurant name returns that restaurant.
+  - [x] A query by cuisine returns all restaurants of that cuisine.
+  - [x] A query with no matches returns an empty array and HTTP 200.
 - Integration tests:
-  - [ ] Consuming a catalog-available event indexes the restaurant and it becomes searchable (Testcontainers Elasticsearch).
+  - [x] Consuming a catalog-available event indexes the restaurant and it becomes searchable (Testcontainers Elasticsearch).
+
+> Done: 7 tests (search endpoint, consumer harness, + ES Testcontainers integration); coverage 89.83%.
+> Indexes from `RestaurantDelivery.Contracts.Catalog.RestaurantPublished` only (ADR-004); endpoint
+> `GET /api/restaurants?q=` (multi_match name/cuisine; blank q browses all; no match → empty 200).
+> Client `Elastic.Clients.Elasticsearch` pinned to 8.13.4 to match the ES server image.
 - Test coverage target: >=80%
 - All tests must pass
 
