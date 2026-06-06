@@ -23,9 +23,9 @@ namespace RestaurantDelivery.Order.Saga;
 /// EXTENSION POINTS for later tasks (do not require touching the placement/payment legs):
 /// task_08 adds the restaurant endpoints that publish <c>OrderAccepted</c>/<c>OrderReady</c>;
 /// task_10 adds the driver endpoints that publish <c>OrderPickedUp</c>/<c>OrderDelivered</c>;
-/// task_11 adds the compensation branch by handling <see cref="DriverUnavailable"/> in
-/// <see cref="AwaitingDriver"/> (left intentionally unhandled here) — issuing <c>RefundPayment</c> and
-/// transitioning to a <c>NoDriverRefunded</c> terminal state.
+/// task_11 added the compensation branch by handling <see cref="DriverUnavailable"/> in
+/// <see cref="AwaitingDriver"/> — issuing <c>RefundPayment</c> and transitioning to the
+/// <c>NoDriverRefunded</c> terminal state.
 /// </para>
 /// </summary>
 public sealed class OrderStateMachine : MassTransitStateMachine<OrderState>
@@ -40,6 +40,7 @@ public sealed class OrderStateMachine : MassTransitStateMachine<OrderState>
         Event(() => OrderAccepted, x => x.CorrelateById(m => m.Message.OrderId));
         Event(() => OrderReady, x => x.CorrelateById(m => m.Message.OrderId));
         Event(() => DriverAssigned, x => x.CorrelateById(m => m.Message.OrderId));
+        Event(() => DriverUnavailable, x => x.CorrelateById(m => m.Message.OrderId));
         Event(() => OrderPickedUp, x => x.CorrelateById(m => m.Message.OrderId));
         Event(() => OrderDelivered, x => x.CorrelateById(m => m.Message.OrderId));
 
@@ -100,7 +101,22 @@ public sealed class OrderStateMachine : MassTransitStateMachine<OrderState>
                     saga.DriverName = msg.DriverName;
                     saga.EtaMinutes = msg.EtaMinutes;
                 })
-                .TransitionTo(DriverAssignedState));
+                .TransitionTo(DriverAssignedState),
+            // Compensation path (task_11, PRD F9): Dispatch found no driver after payment. The saga issues
+            // exactly one RefundPayment command (the Payment service's RefundPaymentConsumer carries out the
+            // refund) and moves to the terminal NoDriverRefunded state — no "paid but undelivered" orphan.
+            // A redelivered DriverUnavailable finds the instance already in NoDriverRefunded (no longer
+            // AwaitingDriver), so OnUnhandledEvent ignores it and no second refund is issued.
+            When(DriverUnavailable)
+                .Publish(context => new RefundPayment(
+                    context.Saga.CorrelationId,
+                    context.Saga.OrderCorrelationId))
+                // Also announce OrderRefunded so the consumer-facing side reacts: Tracking projects the
+                // refunded/cancelled terminal stage and Notification tells the consumer (PRD F9).
+                .Publish(context => new OrderRefunded(
+                    context.Saga.CorrelationId,
+                    context.Saga.OrderCorrelationId))
+                .TransitionTo(NoDriverRefunded));
 
         During(DriverAssignedState,
             When(OrderPickedUp)
@@ -127,6 +143,9 @@ public sealed class OrderStateMachine : MassTransitStateMachine<OrderState>
     public State PickedUp { get; private set; } = null!;
     public State Delivered { get; private set; } = null!;
 
+    /// <summary>Terminal compensation state: no driver was available, the payment was refunded (task_11).</summary>
+    public State NoDriverRefunded { get; private set; } = null!;
+
     // Events the saga reacts to (all are shared Contracts messages — no new cross-service messages).
     public Event<OrderPlaced> OrderPlaced { get; private set; } = null!;
     public Event<PaymentSettled> PaymentSettled { get; private set; } = null!;
@@ -134,6 +153,7 @@ public sealed class OrderStateMachine : MassTransitStateMachine<OrderState>
     public Event<OrderAccepted> OrderAccepted { get; private set; } = null!;
     public Event<OrderReady> OrderReady { get; private set; } = null!;
     public Event<DriverAssigned> DriverAssigned { get; private set; } = null!;
+    public Event<DriverUnavailable> DriverUnavailable { get; private set; } = null!;
     public Event<OrderPickedUp> OrderPickedUp { get; private set; } = null!;
     public Event<OrderDelivered> OrderDelivered { get; private set; } = null!;
 }

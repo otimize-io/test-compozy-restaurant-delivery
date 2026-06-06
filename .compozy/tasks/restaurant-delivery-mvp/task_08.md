@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Restaurant order flow (accept/ready + saga transitions)
 type: backend
 complexity: medium
@@ -30,10 +30,10 @@ order queue (New → In Progress → Ready) that the restaurant view consumes.
 </requirements>
 
 ## Subtasks
-- [ ] 8.1 Implement accept and ready endpoints/commands.
-- [ ] 8.2 Wire the saga transitions `Paid → Accepted` and `→ ReadyForPickup`.
-- [ ] 8.3 Implement the restaurant order-queue read grouped by status.
-- [ ] 8.4 Enforce valid-state guards (409 on invalid transition).
+- [x] 8.1 Implement accept and ready endpoints/commands.
+- [x] 8.2 Wire the saga transitions `Paid → Accepted` and `→ ReadyForPickup`.
+- [x] 8.3 Implement the restaurant order-queue read grouped by status.
+- [x] 8.4 Enforce valid-state guards (409 on invalid transition).
 
 ## Implementation Details
 Extend the Order saga (task_06) with the restaurant leg; restaurant-facing endpoints live in the
@@ -60,12 +60,12 @@ and "Core Interfaces" (`OrderStatus`). Emits `OrderAccepted`/`OrderReady` for Tr
 
 ## Tests
 - Unit tests:
-  - [ ] `POST /api/orders/{id}/accept` on a `Paid` order moves it to `Accepted` and emits `OrderAccepted`.
-  - [ ] `POST /api/orders/{id}/ready` on an `Accepted`/`Preparing` order moves it to `ReadyForPickup` and emits `OrderReady`.
-  - [ ] Accepting an order that is not `Paid` returns HTTP 409.
-  - [ ] The restaurant queue groups orders into New/In-Progress/Ready correctly.
+  - [x] `POST /api/orders/{id}/accept` on a `Paid` order moves it to `Accepted` and emits `OrderAccepted`.
+  - [x] `POST /api/orders/{id}/ready` on an `Accepted`/`Preparing` order moves it to `ReadyForPickup` and emits `OrderReady`.
+  - [x] Accepting an order that is not `Paid` returns HTTP 409.
+  - [x] The restaurant queue groups orders into New/In-Progress/Ready correctly.
 - Integration tests:
-  - [ ] Accept then ready drives a persisted order through both transitions and both events are observed (Testcontainers).
+  - [x] Accept then ready drives a persisted order through both transitions and both events are observed (Testcontainers).
 - Test coverage target: >=80%
 - All tests must pass
 

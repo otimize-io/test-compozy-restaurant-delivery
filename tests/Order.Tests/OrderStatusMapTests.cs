@@ -18,6 +18,7 @@ public class OrderStatusMapTests
     [InlineData(nameof(OrderStateMachine.DriverAssignedState), OrderStatus.DriverAssigned)]
     [InlineData(nameof(OrderStateMachine.PickedUp), OrderStatus.PickedUp)]
     [InlineData(nameof(OrderStateMachine.Delivered), OrderStatus.Delivered)]
+    [InlineData(nameof(OrderStateMachine.NoDriverRefunded), OrderStatus.NoDriverRefunded)]
     public void Maps_each_saga_state_name_to_its_status(string state, OrderStatus expected)
     {
         Assert.Equal(expected, OrderStatusMap.FromSagaState(state));

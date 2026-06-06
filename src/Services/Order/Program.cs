@@ -1,6 +1,8 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using RestaurantDelivery.Order.Driver;
 using RestaurantDelivery.Order.Orders;
+using RestaurantDelivery.Order.Restaurant;
 using RestaurantDelivery.Order.Saga;
 using RestaurantDelivery.Platform;
 
@@ -15,6 +17,8 @@ builder.Services.AddDbContext<OrderDbContext>(db =>
         ?? "Host=localhost;Database=order;Username=postgres;Password=postgres"));
 
 builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<RestaurantOrderService>();
+builder.Services.AddScoped<DriverOrderService>();
 
 // MassTransit hosts the orchestration saga (ADR-004). The bus callback registers, in order: the EF
 // transactional outbox (atomic save + publish), and the saga state machine backed by the EF saga
@@ -57,5 +61,7 @@ using (var scope = app.Services.CreateScope())
 
 app.UsePlatform();
 app.MapOrderEndpoints();
+app.MapRestaurantEndpoints();
+app.MapDriverEndpoints();
 
 app.Run();

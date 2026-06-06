@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Driver delivery flow (pickup/deliver + saga transitions)
 type: backend
 complexity: medium
@@ -31,10 +31,10 @@ driver assignments endpoint the driver view consumes.
 </requirements>
 
 ## Subtasks
-- [ ] 10.1 Implement the driver assignments read endpoint.
-- [ ] 10.2 Implement pickup and deliver endpoints/commands.
-- [ ] 10.3 Wire saga transitions `DriverAssigned → PickedUp → Delivered`.
-- [ ] 10.4 Enforce valid-state guards (409) and emit pickup/delivered events.
+- [x] 10.1 Implement the driver assignments read endpoint.
+- [x] 10.2 Implement pickup and deliver endpoints/commands.
+- [x] 10.3 Wire saga transitions `DriverAssigned → PickedUp → Delivered`.
+- [x] 10.4 Enforce valid-state guards (409) and emit pickup/delivered events.
 
 ## Implementation Details
 Extend the Order saga (task_06) with the driver leg; consume the `DriverAssigned` outcome from
@@ -60,12 +60,12 @@ Dispatch (task_09). Reference TechSpec "API Endpoints" and "Core Interfaces" (`O
 
 ## Tests
 - Unit tests:
-  - [ ] `POST /api/orders/{id}/pickup` on a `DriverAssigned` order moves it to `PickedUp` and emits `OrderPickedUp`.
-  - [ ] `POST /api/orders/{id}/deliver` on a `PickedUp` order moves it to `Delivered` and emits `OrderDelivered`.
-  - [ ] Pickup on an order not in `DriverAssigned` returns HTTP 409.
-  - [ ] `GET /api/driver/assignments` lists the assignment created for an assigned driver.
+  - [x] `POST /api/orders/{id}/pickup` on a `DriverAssigned` order moves it to `PickedUp` and emits `OrderPickedUp`.
+  - [x] `POST /api/orders/{id}/deliver` on a `PickedUp` order moves it to `Delivered` and emits `OrderDelivered`.
+  - [x] Pickup on an order not in `DriverAssigned` returns HTTP 409.
+  - [x] `GET /api/driver/assignments` lists the assignment created for an assigned driver.
 - Integration tests:
-  - [ ] From `DriverAssigned`, pickup then deliver drives a persisted order to `Delivered` with both events observed (Testcontainers).
+  - [x] From `DriverAssigned`, pickup then deliver drives a persisted order to `Delivered` with both events observed (Testcontainers).
 - Test coverage target: >=80%
 - All tests must pass
 

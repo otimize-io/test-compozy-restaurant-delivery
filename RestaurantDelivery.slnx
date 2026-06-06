@@ -7,6 +7,7 @@
     <Project Path="src/Services/Order/Order.csproj" />
     <Project Path="src/Services/Payment/Payment.csproj" />
     <Project Path="src/Services/Search/Search.csproj" />
+    <Project Path="src/Services/Tracking/Tracking.csproj" />
   </Folder>
   <Folder Name="/src/Shared/">
     <Project Path="src/Shared/Bootstrap/Bootstrap.csproj" />
@@ -23,5 +24,6 @@
     <Project Path="tests/Payment.Tests/Payment.Tests.csproj" />
     <Project Path="tests/Platform.Tests/Platform.Tests.csproj" />
     <Project Path="tests/Search.Tests/Search.Tests.csproj" />
+    <Project Path="tests/Tracking.Tests/Tracking.Tests.csproj" />
   </Folder>
 </Solution>

@@ -21,6 +21,7 @@ public static class OrderStatusMap
         nameof(OrderStateMachine.DriverAssignedState) => OrderStatus.DriverAssigned,
         nameof(OrderStateMachine.PickedUp) => OrderStatus.PickedUp,
         nameof(OrderStateMachine.Delivered) => OrderStatus.Delivered,
+        nameof(OrderStateMachine.NoDriverRefunded) => OrderStatus.NoDriverRefunded,
         _ => OrderStatus.Placed,
     };
 }

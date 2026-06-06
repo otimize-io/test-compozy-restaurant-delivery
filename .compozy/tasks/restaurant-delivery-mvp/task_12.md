@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Tracking service (Redis 5-stage projection)
 type: backend
 complexity: medium
@@ -30,10 +30,10 @@ live views" possible and is rebuildable purely from events.
 </requirements>
 
 ## Subtasks
-- [ ] 12.1 Consume order events and project to the 5-stage `TrackingView` in Redis.
-- [ ] 12.2 Map each lifecycle event to its tracking stage (including refunded terminal).
-- [ ] 12.3 Expose a current-status read endpoint for resync.
-- [ ] 12.4 Emit a status-changed signal consumed by the gateway SignalR hub.
+- [x] 12.1 Consume order events and project to the 5-stage `TrackingView` in Redis.
+- [x] 12.2 Map each lifecycle event to its tracking stage (including refunded terminal).
+- [x] 12.3 Expose a current-status read endpoint for resync.
+- [x] 12.4 Emit a status-changed signal consumed by the gateway SignalR hub.
 
 ## Implementation Details
 Create the service under `src/Services/Tracking/`. Reference TechSpec "Data Models" (TrackingView),
@@ -59,12 +59,12 @@ Create the service under `src/Services/Tracking/`. Reference TechSpec "Data Mode
 
 ## Tests
 - Unit tests:
-  - [ ] `OrderPlaced` sets stage 1 (Order placed).
-  - [ ] `OrderAccepted` advances the view to stage 2 (Preparing).
-  - [ ] `OrderDelivered` advances to stage 5 (Delivered); `OrderRefunded` sets the refunded terminal stage.
-  - [ ] Replaying the event stream from empty reconstructs the same `TrackingView`.
+  - [x] `OrderPlaced` sets stage 1 (Order placed).
+  - [x] `OrderAccepted` advances the view to stage 2 (Preparing).
+  - [x] `OrderDelivered` advances to stage 5 (Delivered); `OrderRefunded` sets the refunded terminal stage.
+  - [x] Replaying the event stream from empty reconstructs the same `TrackingView`.
 - Integration tests:
-  - [ ] A sequence of lifecycle events on the broker is projected into Redis and the read endpoint returns the latest stage (Testcontainers).
+  - [x] A sequence of lifecycle events on the broker is projected into Redis and the read endpoint returns the latest stage (Testcontainers).
 - Test coverage target: >=80%
 - All tests must pass
 

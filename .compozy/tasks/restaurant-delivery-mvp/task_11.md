@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Compensation path (no-driver → refund) + compensation test
 type: backend
 complexity: high
@@ -33,10 +33,10 @@ test that proves it.
 </requirements>
 
 ## Subtasks
-- [ ] 11.1 Add the `DriverUnavailable` handler to the saga issuing `RefundPayment`.
-- [ ] 11.2 Implement payment refund (`RefundAsync`) and `OrderRefunded` emission.
-- [ ] 11.3 Transition the order to the terminal `NoDriverRefunded` state.
-- [ ] 11.4 Add the compensation test (fault injection → refund → terminal state).
+- [x] 11.1 Add the `DriverUnavailable` handler to the saga issuing `RefundPayment`.
+- [x] 11.2 Implement payment refund (`RefundAsync`) and `OrderRefunded` emission.
+- [x] 11.3 Transition the order to the terminal `NoDriverRefunded` state.
+- [x] 11.4 Add the compensation test (fault injection → refund → terminal state).
 
 ## Implementation Details
 Extend the Order saga (task_06) with the compensation branch; reuse the Dispatch no-driver toggle
@@ -64,11 +64,11 @@ test" and "Core Interfaces" (`OrderStatus.NoDriverRefunded`).
 
 ## Tests
 - Unit tests:
-  - [ ] On `DriverUnavailable`, the saga issues exactly one `RefundPayment` command.
-  - [ ] After `OrderRefunded`, the order is in `NoDriverRefunded` and accepts no further transitions.
-  - [ ] A duplicate `DriverUnavailable` does not issue a second refund (idempotent).
+  - [x] On `DriverUnavailable`, the saga issues exactly one `RefundPayment` command.
+  - [x] After `OrderRefunded`, the order is in `NoDriverRefunded` and accepts no further transitions.
+  - [x] A duplicate `DriverUnavailable` does not issue a second refund (idempotent).
 - Integration tests:
-  - [ ] Compensation test: with the Dispatch no-driver toggle on, a paid order ends at `NoDriverRefunded`, the payment is refunded, and no order remains "paid but undelivered" (Testcontainers).
+  - [x] Compensation test: with the Dispatch no-driver toggle on, a paid order ends at `NoDriverRefunded`, the payment is refunded, and no order remains "paid but undelivered" (Testcontainers).
 - Test coverage target: >=80%
 - All tests must pass
 
