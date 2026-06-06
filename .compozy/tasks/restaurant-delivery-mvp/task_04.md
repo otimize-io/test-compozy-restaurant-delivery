@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Catalog service (MongoDB) + seed
 type: backend
 complexity: medium
@@ -31,10 +31,10 @@ exposes restaurant-detail and menu reads. It is the source of truth for what the
 </requirements>
 
 ## Subtasks
-- [ ] 4.1 Define restaurant/menu-item models and MongoDB persistence.
-- [ ] 4.2 Implement startup seeding of mock restaurants and menus.
-- [ ] 4.3 Implement restaurant-detail and menu read endpoints.
-- [ ] 4.4 Publish a catalog-seeded/restaurant-available event for Search.
+- [x] 4.1 Define restaurant/menu-item models and MongoDB persistence.
+- [x] 4.2 Implement startup seeding of mock restaurants and menus.
+- [x] 4.3 Implement restaurant-detail and menu read endpoints.
+- [x] 4.4 Publish a catalog-seeded/restaurant-available event for Search.
 
 ## Implementation Details
 Create the service under `src/Services/Catalog/`. Reference TechSpec "Data Models" (Restaurant,
@@ -62,12 +62,16 @@ Platform library (task_03) for host, logging, health, and messaging.
 
 ## Tests
 - Unit tests:
-  - [ ] `GET /api/restaurants/{id}/menu` for a seeded restaurant returns its seeded items.
-  - [ ] `GET /api/restaurants/{id}` with an unknown id returns 404.
-  - [ ] Seeding produces the expected restaurant count on a fresh database.
+  - [x] `GET /api/restaurants/{id}/menu` for a seeded restaurant returns its seeded items.
+  - [x] `GET /api/restaurants/{id}` with an unknown id returns 404.
+  - [x] Seeding produces the expected restaurant count on a fresh database.
 - Integration tests:
-  - [ ] Catalog writes and reads a restaurant document from MongoDB (Testcontainers).
-  - [ ] On startup the catalog-seeded event is published and observable on the broker.
+  - [x] Catalog writes and reads a restaurant document from MongoDB (Testcontainers).
+  - [x] On startup the catalog-seeded event is published and observable (in-memory MassTransit harness).
+
+> Done: 10 tests (endpoints, seeder, + Mongo Testcontainers & harness-publish integration); coverage
+> 90.07%. Publishes `RestaurantDelivery.Contracts.Catalog.RestaurantPublished` per restaurant; seeding
+> gated by `Catalog:SeedRestaurants`. Store behind `IRestaurantStore` (Mongo `catalog.restaurants`).
 - Test coverage target: >=80%
 - All tests must pass
 

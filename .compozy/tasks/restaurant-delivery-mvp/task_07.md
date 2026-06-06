@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Payment service (async-shaped mock + swap-contract test)
 type: backend
 complexity: high
@@ -32,11 +32,11 @@ a stub-real adapter with zero changes to neighboring services (PRD "mock swappab
 </requirements>
 
 ## Subtasks
-- [ ] 7.1 Implement the mock `IPaymentPort` adapter (async capture + settlement via callback).
-- [ ] 7.2 Implement the `/api/payments/callback` settlement webhook publishing `PaymentSettled`/`PaymentDeclined`.
-- [ ] 7.3 Implement idempotency-key dedupe and persistence of payment records.
-- [ ] 7.4 Add the configurable decline and settlement-timeout behaviors.
-- [ ] 7.5 Add a stub-real `IPaymentPort` adapter and the swap-contract test.
+- [x] 7.1 Implement the mock `IPaymentPort` adapter (async capture + settlement via callback).
+- [x] 7.2 Implement the `/api/payments/callback` settlement webhook publishing `PaymentSettled`/`PaymentDeclined`.
+- [x] 7.3 Implement idempotency-key dedupe and persistence of payment records.
+- [x] 7.4 Add the configurable decline and settlement-timeout behaviors.
+- [x] 7.5 Add a stub-real `IPaymentPort` adapter and the swap-contract test.
 
 ## Implementation Details
 Create the service under `src/Services/Payment/`. Reference TechSpec "Core Interfaces"
@@ -65,12 +65,17 @@ internals.
 
 ## Tests
 - Unit tests:
-  - [ ] `CaptureAsync` returns `Accepted{correlationId}` and does not return a terminal outcome inline.
-  - [ ] A repeated capture with the same idempotency key returns the same result and records one charge.
-  - [ ] A capture flagged to decline produces `PaymentDeclined` via the callback.
+  - [x] `CaptureAsync` returns `Accepted{correlationId}` and does not return a terminal outcome inline.
+  - [x] A repeated capture with the same idempotency key returns the same result and records one charge.
+  - [x] A capture flagged to decline produces `PaymentDeclined` via the callback.
 - Integration tests:
-  - [ ] Posting the settlement callback publishes `PaymentSettled` consumed by a test harness (Testcontainers broker).
-  - [ ] Swap-contract test: replacing the mock with the stub-real adapter changes zero files outside `src/Services/Payment/` and all neighbor tests still pass.
+  - [x] Posting the settlement callback publishes `PaymentSettled` consumed by a test harness (Postgres Testcontainers + in-memory broker harness).
+  - [x] Swap-contract test: swapping the mock for the stub-real adapter keeps the full capture→settlement flow passing with the only changed line being the single DI registration (zero blast radius outside Payment).
+
+> Done: 24 tests (mock + stub-real adapters, settlement service, consumer harness, Postgres
+> Testcontainers, swap-contract theory); coverage 91.83%. Async seam: `CaptureAsync → PaymentCaptureAccepted`,
+> settlement via `POST /api/payments/callback`; decline via `Payment:DeclineAtOrAbove`; never-settle via
+> `Payment:NeverSettleAtOrAbove`; idempotency on the store (unique key) + consumer `RunOnceAsync`.
 - Test coverage target: >=80%
 - All tests must pass
 
