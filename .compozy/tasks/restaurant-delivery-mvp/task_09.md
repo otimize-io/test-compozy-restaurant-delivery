@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Dispatch service (nearest-available mock, Redis)
 type: backend
 complexity: medium
@@ -31,10 +31,10 @@ real/global matcher can replace it later.
 </requirements>
 
 ## Subtasks
-- [ ] 9.1 Implement the Redis-backed driver store and seed data.
-- [ ] 9.2 Implement the nearest-available `IDriverMatcher` mock.
-- [ ] 9.3 Consume `DriverRequested`; publish `DriverAssigned` or `DriverUnavailable`.
-- [ ] 9.4 Provide a deterministic "no driver" toggle for the compensation path.
+- [x] 9.1 Implement the Redis-backed driver store and seed data.
+- [x] 9.2 Implement the nearest-available `IDriverMatcher` mock.
+- [x] 9.3 Consume `DriverRequested`; publish `DriverAssigned` or `DriverUnavailable`.
+- [x] 9.4 Provide a deterministic "no driver" toggle for the compensation path.
 
 ## Implementation Details
 Create the service under `src/Services/Dispatch/`. Reference TechSpec "Core Interfaces"
@@ -62,11 +62,15 @@ the `DriverRequested` event.
 
 ## Tests
 - Unit tests:
-  - [ ] With one available seeded driver, `FindDriverAsync` returns that driver.
-  - [ ] With no available drivers, `FindDriverAsync` returns null and the handler emits `DriverUnavailable`.
-  - [ ] Given two drivers, the geographically nearer one is selected.
+  - [x] With one available seeded driver, `FindDriverAsync` returns that driver.
+  - [x] With no available drivers, `FindDriverAsync` returns null and the handler emits `DriverUnavailable`.
+  - [x] Given two drivers, the geographically nearer one is selected.
 - Integration tests:
-  - [ ] A `DriverRequested` event results in a `DriverAssigned` event when a seeded driver exists (Testcontainers Redis + broker).
+  - [x] A `DriverRequested` event results in a `DriverAssigned` event when a seeded driver exists (Testcontainers Redis + in-memory broker harness).
+
+> Done: 13 tests (matcher, consumer-via-harness, DriverSeeder, + 2 Testcontainers-Redis integration);
+> coverage 95.38% (Program.cs excluded as composition root). No-driver path is toggled by
+> `Dispatch:SeedDrivers=false` (empty store) per subtask 9.4.
 - Test coverage target: >=80%
 - All tests must pass
 

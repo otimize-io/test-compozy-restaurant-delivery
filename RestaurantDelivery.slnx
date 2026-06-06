@@ -1,5 +1,9 @@
 <Solution>
   <Folder Name="/src/" />
+  <Folder Name="/src/Services/">
+    <Project Path="src/Services/Dispatch/Dispatch.csproj" />
+    <Project Path="src/Services/Notification/Notification.csproj" />
+  </Folder>
   <Folder Name="/src/Shared/">
     <Project Path="src/Shared/Bootstrap/Bootstrap.csproj" />
     <Project Path="src/Shared/Contracts/Contracts.csproj" />
@@ -8,6 +12,8 @@
   <Folder Name="/tests/">
     <Project Path="tests/Bootstrap.Tests/Bootstrap.Tests.csproj" />
     <Project Path="tests/Contracts.Tests/Contracts.Tests.csproj" />
+    <Project Path="tests/Dispatch.Tests/Dispatch.Tests.csproj" />
+    <Project Path="tests/Notification.Tests/Notification.Tests.csproj" />
     <Project Path="tests/Platform.Tests/Platform.Tests.csproj" />
   </Folder>
 </Solution>
