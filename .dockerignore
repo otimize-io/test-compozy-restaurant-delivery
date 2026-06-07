@@ -1,0 +1,18 @@
+# Build/runtime artifacts and dependencies that must never enter the build context.
+# Keeps the context small and avoids leaking host-built binaries into the image.
+**/bin
+**/obj
+**/out
+**/TestResults
+**/node_modules
+**/dist
+.git
+.gitignore
+.vs
+.vscode
+.idea
+**/*.user
+# Docker artifacts themselves
+**/Dockerfile
+.dockerignore
+docker-compose*.yml

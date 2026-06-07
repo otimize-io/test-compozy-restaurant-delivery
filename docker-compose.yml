@@ -29,6 +29,10 @@ services:
       POSTGRES_DB: delivery
     ports:
       - "5432:5432"
+    # Create the separate `order` and `payment` databases on first init. EF EnsureCreated builds
+    # each service's schema but not the database itself, so they must exist before the services start.
+    volumes:
+      - ./infra/postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d delivery"]
       interval: 10s
@@ -75,3 +79,239 @@ services:
       timeout: 5s
       retries: 20
       start_period: 5s
+
+  # ---------------------------------------------------------------------------
+  # Application tier: 7 microservices + YARP gateway + Angular SPA.
+  # All built from the single parameterized repo-root Dockerfile (PROJECT + APP_DLL build args),
+  # except `web` which uses src/Web/Dockerfile. Kestrel listens on 8080 inside each container; the
+  # in-network URLs are http://<service>:8080 and the bus is rabbitmq://rabbitmq (internal 5672).
+  # Connection strings and (for the gateway) YARP destinations are injected via __ env vars.
+  #
+  # NOTE (MassTransit license): the services use MassTransit 9.1.2, whose RabbitMQ transport requires
+  # a commercial license and refuses to start the bus without one (error: "License must be specified
+  # ... MT_LICENSE/MT_LICENSE_PATH"). Every messaging service therefore passes MT_LICENSE through from
+  # the host/.env (default empty). Provide a valid key (export MT_LICENSE=... or a .env file) to let
+  # the full stack start; this requires NO change to .NET service code. See the *-license anchors below.
+  # ---------------------------------------------------------------------------
+
+  catalog:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT: src/Services/Catalog/Catalog.csproj
+        APP_DLL: Catalog.dll
+    container_name: rd-catalog
+    environment:
+      # MassTransit 9 commercial license (see top-of-tier note). Empty by default -> bus won't start.
+      MT_LICENSE: ${MT_LICENSE:-}
+      ConnectionStrings__RabbitMq: rabbitmq://rabbitmq
+      ConnectionStrings__MongoDb: mongodb://mongo:27017
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  search:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT: src/Services/Search/Search.csproj
+        APP_DLL: Search.dll
+    container_name: rd-search
+    environment:
+      MT_LICENSE: ${MT_LICENSE:-}
+      ConnectionStrings__RabbitMq: rabbitmq://rabbitmq
+      ConnectionStrings__Elasticsearch: http://elasticsearch:9200
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  order:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT: src/Services/Order/Order.csproj
+        APP_DLL: Order.dll
+    container_name: rd-order
+    environment:
+      MT_LICENSE: ${MT_LICENSE:-}
+      ConnectionStrings__RabbitMq: rabbitmq://rabbitmq
+      # Distinct database on the shared postgres container (created by infra/postgres-init).
+      ConnectionStrings__Postgres: Host=postgres;Database=order;Username=postgres;Password=postgres
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  payment:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT: src/Services/Payment/Payment.csproj
+        APP_DLL: Payment.dll
+    container_name: rd-payment
+    environment:
+      MT_LICENSE: ${MT_LICENSE:-}
+      ConnectionStrings__RabbitMq: rabbitmq://rabbitmq
+      # Distinct database on the shared postgres container (created by infra/postgres-init).
+      ConnectionStrings__Postgres: Host=postgres;Database=payment;Username=postgres;Password=postgres
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  dispatch:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT: src/Services/Dispatch/Dispatch.csproj
+        APP_DLL: Dispatch.dll
+    container_name: rd-dispatch
+    environment:
+      MT_LICENSE: ${MT_LICENSE:-}
+      ConnectionStrings__RabbitMq: rabbitmq://rabbitmq
+      ConnectionStrings__Redis: redis:6379
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  tracking:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT: src/Services/Tracking/Tracking.csproj
+        APP_DLL: Tracking.dll
+    container_name: rd-tracking
+    environment:
+      MT_LICENSE: ${MT_LICENSE:-}
+      ConnectionStrings__RabbitMq: rabbitmq://rabbitmq
+      ConnectionStrings__Redis: redis:6379
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  notification:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT: src/Services/Notification/Notification.csproj
+        APP_DLL: Notification.dll
+    container_name: rd-notification
+    environment:
+      MT_LICENSE: ${MT_LICENSE:-}
+      ConnectionStrings__RabbitMq: rabbitmq://rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT: src/Gateway/Gateway.csproj
+        APP_DLL: Gateway.dll
+    container_name: rd-gateway
+    environment:
+      MT_LICENSE: ${MT_LICENSE:-}
+      ConnectionStrings__RabbitMq: rabbitmq://rabbitmq
+      # YARP cluster destinations point at the in-network service URLs (Kestrel on :8080).
+      # Destination key is "primary" for every cluster (see Gateway appsettings.json).
+      ReverseProxy__Clusters__search__Destinations__primary__Address: http://search:8080/
+      ReverseProxy__Clusters__catalog__Destinations__primary__Address: http://catalog:8080/
+      ReverseProxy__Clusters__order__Destinations__primary__Address: http://order:8080/
+      ReverseProxy__Clusters__payment__Destinations__primary__Address: http://payment:8080/
+      ReverseProxy__Clusters__tracking__Destinations__primary__Address: http://tracking:8080/
+    # Published so the browser (and smoke tests) can reach the single entry point on the host.
+    ports:
+      - "8080:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      search:
+        condition: service_healthy
+      catalog:
+        condition: service_healthy
+      order:
+        condition: service_healthy
+      payment:
+        condition: service_healthy
+      tracking:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  web:
+    build:
+      context: ./src/Web
+      dockerfile: Dockerfile
+    container_name: rd-web
+    # nginx serves the SPA on container :80, published on host :4200. The browser calls the
+    # gateway directly at http://localhost:8080 (baked into environment.ts apiBase).
+    ports:
+      - "4200:80"
+    depends_on:
+      gateway:
+        condition: service_healthy

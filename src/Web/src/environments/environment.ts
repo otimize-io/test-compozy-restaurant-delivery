@@ -7,5 +7,8 @@
  */
 export const environment = {
   production: true,
-  apiBase: 'http://localhost:5000',
+  // The browser reaches the YARP gateway on its HOST-published port. In docker-compose the
+  // gateway is published as 8080:8080, so the containerised web app (served by nginx on
+  // host port 4200) calls the gateway at http://localhost:8080 (REST + SignalR /hubs/orders).
+  apiBase: 'http://localhost:8080',
 };
