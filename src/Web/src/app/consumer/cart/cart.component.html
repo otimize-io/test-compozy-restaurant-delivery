@@ -1,0 +1,58 @@
+<section class="container">
+  <h1>Your cart</h1>
+
+  @if (restaurant(); as r) {
+    <p class="muted" data-testid="cart-restaurant">From <strong>{{ r.name }}</strong></p>
+  }
+
+  @if (hasItems()) {
+    <ul class="lines" data-testid="cart-lines">
+      @for (line of lines(); track line.item.id) {
+        <li class="line card" data-testid="cart-line">
+          <div class="line__info">
+            <span class="line__name">{{ line.item.name }}</span>
+            <span class="line__price muted">{{ line.item.price | currency }} each</span>
+          </div>
+          <div class="qty" role="group" aria-label="Quantity">
+            <button type="button" class="qty__btn" data-testid="dec" (click)="decrement(line.item.id)">−</button>
+            <span class="qty__value" data-testid="qty">{{ line.quantity }}</span>
+            <button type="button" class="qty__btn" data-testid="inc" (click)="increment(line.item.id)">+</button>
+          </div>
+          <span class="line__subtotal" data-testid="line-subtotal">
+            {{ line.item.price * line.quantity | currency }}
+          </span>
+          <button type="button" class="line__remove" data-testid="remove" (click)="remove(line.item.id)" aria-label="Remove">
+            ✕
+          </button>
+        </li>
+      }
+    </ul>
+
+    <div class="summary card">
+      <div class="summary__row summary__row--total">
+        <span>Total</span>
+        <span data-testid="cart-total">{{ total() | currency }}</span>
+      </div>
+      @if (error()) {
+        <p class="error" data-testid="checkout-error">{{ error() }}</p>
+      }
+      <button
+        type="button"
+        class="btn btn-primary summary__pay"
+        data-testid="place-pay"
+        [disabled]="placing()"
+        (click)="placeAndPay()"
+      >
+        @if (placing()) {
+          Placing order…
+        } @else {
+          Place order &amp; pay {{ total() | currency }}
+        }
+      </button>
+      <p class="muted summary__note">Payment is confirmed before a driver is assigned.</p>
+    </div>
+  } @else {
+    <p class="muted empty" data-testid="cart-empty">Your cart is empty.</p>
+    <a class="btn btn-primary" routerLink="/consumer">Browse restaurants</a>
+  }
+</section>

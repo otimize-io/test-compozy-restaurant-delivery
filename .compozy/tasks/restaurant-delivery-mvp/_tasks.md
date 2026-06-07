@@ -18,5 +18,5 @@
 | 12 | Tracking service (Redis 5-stage projection) | completed | medium | task_06 |
 | 13 | Notification service (fire-and-forget seam) | completed | low | task_03 |
 | 14 | API Gateway/BFF + SignalR hub + E2E happy-path test | completed | high | task_04, task_05, task_06, task_07, task_08, task_10, task_12 |
-| 15 | Angular shell + role switcher + consumer view | pending | high | task_14 |
+| 15 | Angular shell + role switcher + consumer view | completed | high | task_14 |
 | 16 | Angular restaurant & driver views | pending | medium | task_15 |

@@ -1,0 +1,57 @@
+<section class="container">
+  <div class="track-head">
+    <h1>Tracking your order</h1>
+    <span
+      class="conn"
+      [class.conn--live]="connectionState() === 'connected'"
+      [attr.data-state]="connectionState()"
+      data-testid="conn-state"
+    >
+      @switch (connectionState()) {
+        @case ('connected') { ● Live }
+        @case ('connecting') { ◌ Connecting… }
+        @case ('reconnecting') { ◌ Reconnecting… }
+        @default { ○ Offline }
+      }
+    </span>
+  </div>
+  <p class="muted order-id">Order <code>{{ orderId() }}</code></p>
+
+  @if (isRefunded()) {
+    <div class="refund card" data-testid="refund-banner">
+      <h2 class="refund__title">Order refunded</h2>
+      <p class="refund__body">
+        We couldn't find a driver for your order, so your payment has been refunded. You were not charged.
+      </p>
+    </div>
+  } @else {
+    <ol class="bar" data-testid="tracking-bar">
+      @for (step of steps; track step.stage) {
+        <li
+          class="bar__step"
+          [class.bar__step--complete]="isComplete(step.stage)"
+          [class.bar__step--active]="isActive(step.stage)"
+          [attr.data-stage]="step.stage"
+          [attr.data-complete]="isComplete(step.stage)"
+          [attr.data-active]="isActive(step.stage)"
+          data-testid="tracking-step"
+        >
+          <span class="bar__dot">
+            @if (isComplete(step.stage) && !isActive(step.stage)) { ✓ } @else { {{ step.stage }} }
+          </span>
+          <span class="bar__label">{{ step.label }}</span>
+        </li>
+      }
+    </ol>
+
+    @if (isDelivered()) {
+      <p class="delivered" data-testid="delivered-message">🎉 Delivered. Enjoy your meal!</p>
+    } @else {
+      <p class="muted current" data-testid="current-stage">
+        Current status: <strong>{{ stageName() || 'Awaiting confirmation…' }}</strong>
+      </p>
+    }
+  }
+
+  <a class="btn back-link" routerLink="/consumer" data-testid="track-back">Order something else</a>
+</section>

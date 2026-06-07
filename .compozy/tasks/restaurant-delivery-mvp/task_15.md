@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Angular shell + role switcher + consumer view
 type: frontend
 complexity: high
@@ -31,11 +31,11 @@ This is the demonstrable face of the consumer side and the legible spine of the 
 </requirements>
 
 ## Subtasks
-- [ ] 15.1 Scaffold the Angular app shell and the role switcher.
-- [ ] 15.2 Implement search and restaurant/menu browsing screens.
-- [ ] 15.3 Implement cart and checkout/payment screens.
-- [ ] 15.4 Implement the live 5-stage tracking bar with the SignalR client.
-- [ ] 15.5 Implement reconnect resync via the status read.
+- [x] 15.1 Scaffold the Angular app shell and the role switcher.
+- [x] 15.2 Implement search and restaurant/menu browsing screens.
+- [x] 15.3 Implement cart and checkout/payment screens.
+- [x] 15.4 Implement the live 5-stage tracking bar with the SignalR client.
+- [x] 15.5 Implement reconnect resync via the status read.
 
 ## Implementation Details
 Create the app under `src/Web/`. Reference TechSpec "System Architecture" (frontend), "API Endpoints",
@@ -61,14 +61,21 @@ and ADR-007. Talks exclusively to the gateway (task_14).
 
 ## Tests
 - Unit tests:
-  - [ ] Searching a term calls the gateway search endpoint and renders the returned restaurants.
-  - [ ] Adding items updates the cart total correctly.
-  - [ ] An `OrderStatusChanged` for "Preparing" advances the tracking bar to stage 2.
-  - [ ] The role switcher sets the `X-Demo-Role` header on outgoing requests.
+  - [x] Searching a term calls the gateway search endpoint and renders the returned restaurants.
+  - [x] Adding items updates the cart total correctly.
+  - [x] An `OrderStatusChanged` for "Preparing" advances the tracking bar to stage 2.
+  - [x] The role switcher sets the `X-Demo-Role` header on outgoing requests.
 - Integration tests:
-  - [ ] Consumer component flow: search → add to cart → checkout → pay renders the tracking screen and reflects a delivered status from the hub (mocked gateway/hub).
+  - [x] Consumer component flow: search → add to cart → checkout → pay renders the tracking screen and reflects a delivered status from the hub (mocked gateway/hub).
 - Test coverage target: >=80%
 - All tests must pass
+
+> Done: Angular 20.1 SPA in `src/Web` (standalone components, signals), test runner **Jest** (jest-preset-angular).
+> Shell + role-switcher HttpInterceptor (`X-Demo-Role`); consumer journey search → menu → cart → checkout
+> (places order then settles payment) → live 5-stage tracking bar via `@microsoft/signalr` (Subscribe +
+> OrderStatusChanged + reconnect resync from `GET /api/orders/{id}/status`). Talks only to the gateway
+> (`environment.apiBase`). `ng build` clean; **72 Jest tests pass, 96.73% line coverage**. Restaurant/driver
+> routes are placeholders, filled by task_16.
 
 ## Success Criteria
 - All tests passing

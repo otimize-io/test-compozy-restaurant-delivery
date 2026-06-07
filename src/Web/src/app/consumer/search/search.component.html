@@ -1,0 +1,39 @@
+<section class="container">
+  <h1 class="hero">What are you craving?</h1>
+  <p class="muted hero-sub">Search restaurants and cuisines to start your order.</p>
+
+  <div class="search-box card">
+    <span class="search-box__icon" aria-hidden="true">🔍</span>
+    <input
+      type="search"
+      class="search-box__input"
+      placeholder="Search restaurants or cuisine…"
+      aria-label="Search restaurants"
+      data-testid="search-input"
+      [formControl]="query"
+    />
+  </div>
+
+  @if (loading()) {
+    <p class="muted status" data-testid="search-loading">Searching…</p>
+  }
+
+  <div class="results" data-testid="results">
+    @for (r of restaurants(); track r.id) {
+      <a class="restaurant card" [routerLink]="['/consumer/restaurant', r.id]" data-testid="restaurant-card">
+        <div class="restaurant__body">
+          <h2 class="restaurant__name">{{ r.name }}</h2>
+          <p class="restaurant__cuisine muted">{{ r.cuisine }}</p>
+          @if (r.description) {
+            <p class="restaurant__desc muted">{{ r.description }}</p>
+          }
+        </div>
+        <span class="restaurant__cta">View menu →</span>
+      </a>
+    } @empty {
+      @if (!loading()) {
+        <p class="muted status" data-testid="empty">No restaurants found. Try another search.</p>
+      }
+    }
+  </div>
+</section>

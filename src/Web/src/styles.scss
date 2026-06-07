@@ -1,0 +1,97 @@
+/* Global styles — a light, rich consumer theme (ADR-002 consumer-rich UI). */
+:root {
+  --brand: #ea1d2c;
+  --brand-dark: #b71522;
+  --ink: #1f2429;
+  --muted: #6b7480;
+  --line: #e6e9ee;
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --ok: #1ba672;
+  --warn: #e0a800;
+  --danger: #d33;
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(20, 28, 38, 0.08), 0 6px 18px rgba(20, 28, 38, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  line-height: 1.5;
+}
+
+a {
+  color: var(--brand);
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.btn {
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: 0.6rem 1.1rem;
+  font-weight: 600;
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+  transition:
+    background 0.15s ease,
+    transform 0.05s ease;
+}
+
+.btn:hover {
+  background: #f0f2f5;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+
+.btn-primary:hover {
+  background: var(--brand-dark);
+}
+
+.btn-primary:disabled {
+  background: #f0a6ab;
+  border-color: #f0a6ab;
+  cursor: not-allowed;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.container {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.muted {
+  color: var(--muted);
+}

@@ -1,0 +1,144 @@
+.track-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.conn {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+}
+
+.conn--live {
+  color: var(--ok);
+  border-color: rgba(27, 166, 114, 0.4);
+}
+
+.order-id {
+  margin-top: 0;
+}
+
+.order-id code {
+  font-size: 0.85rem;
+}
+
+.bar {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 2rem 0;
+  margin: 0;
+  position: relative;
+}
+
+.bar::before {
+  content: '';
+  position: absolute;
+  top: calc(2rem + 1.1rem);
+  left: 1.1rem;
+  right: 1.1rem;
+  height: 3px;
+  background: var(--line);
+  z-index: 0;
+}
+
+.bar__step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.bar__dot {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  background: var(--surface);
+  border: 3px solid var(--line);
+  color: var(--muted);
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease;
+}
+
+.bar__step--complete .bar__dot {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: #fff;
+}
+
+.bar__step--active .bar__dot {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  box-shadow: 0 0 0 6px rgba(234, 29, 44, 0.15);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 6px rgba(234, 29, 44, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(234, 29, 44, 0.05);
+  }
+}
+
+.bar__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  max-width: 9rem;
+}
+
+.bar__step--complete .bar__label,
+.bar__step--active .bar__label {
+  color: var(--ink);
+}
+
+.current {
+  text-align: center;
+  font-size: 1.05rem;
+}
+
+.delivered {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--ok);
+}
+
+.refund {
+  padding: 1.5rem;
+  border-left: 4px solid var(--danger);
+  margin: 1.5rem 0;
+}
+
+.refund__title {
+  margin: 0 0 0.5rem;
+  color: var(--danger);
+}
+
+.refund__body {
+  margin: 0;
+}
+
+.back-link {
+  display: inline-block;
+  margin-top: 1.5rem;
+}
