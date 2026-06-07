@@ -5,6 +5,12 @@
   business logic to meaningfully unit-test, so they are excluded from the coverage denominator.
 -->
 <RunSettings>
+  <RunConfiguration>
+    <!-- Run one test assembly at a time. The in-memory MassTransit harness has a teardown race that
+         only surfaces under heavy cross-assembly CPU contention; serializing assemblies makes the
+         harness lifecycle deterministic. Test projects remain individually fast. -->
+    <MaxCpuCount>1</MaxCpuCount>
+  </RunConfiguration>
   <DataCollectionRunSettings>
     <DataCollectors>
       <DataCollector friendlyName="XPlat Code Coverage">

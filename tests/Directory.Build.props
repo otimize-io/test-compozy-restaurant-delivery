@@ -1,0 +1,9 @@
+<Project>
+
+  <!-- Applies to every test project under tests/. Links the shared xunit configuration so all test
+       assemblies disable parallelization (see SharedTestConfig.cs). -->
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)SharedTestConfig.cs" />
+  </ItemGroup>
+
+</Project>

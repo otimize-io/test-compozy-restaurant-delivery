@@ -14,6 +14,10 @@ namespace Tracking.Tests;
 /// backed by an in-memory <see cref="ITrackingStore"/>. Mirrors the harness style of
 /// <c>Dispatch.Tests.DriverRequestedConsumerHarnessTests</c>: publishes lifecycle events and asserts the
 /// projection in the store, including idempotency on redelivery.
+/// Each test waits for EVERY published event to be consumed (so no consume is in flight) and stops the bus
+/// gracefully. The provider is intentionally NOT disposed: disposing the MassTransit 8 in-memory harness
+/// can race a late consume that resolves a service from the disposing provider. The short-lived test
+/// process reclaims it on exit. This makes the harness tests deterministic.
 /// </summary>
 public class TrackingConsumerHarnessTests
 {
@@ -44,11 +48,14 @@ public class TrackingConsumerHarnessTests
         return (harness, provider, store);
     }
 
+    /// <summary>Stops the in-memory bus gracefully so no consume is left in flight (provider is not disposed).</summary>
+    private static Task StopAsync(ServiceProvider provider) =>
+        provider.GetRequiredService<IBusControl>().StopAsync();
+
     [Fact]
     public async Task A_sequence_of_lifecycle_events_projects_to_the_latest_stage()
     {
         var (harness, provider, store) = await StartHarnessAsync();
-        await using var _ = provider;
 
         var orderId = Guid.NewGuid();
         await harness.Bus.Publish(NewPlaced(orderId));
@@ -57,35 +64,42 @@ public class TrackingConsumerHarnessTests
         await harness.Bus.Publish(new OrderPickedUp(orderId, Corr));
         await harness.Bus.Publish(new OrderDelivered(orderId, Corr));
 
+        Assert.True(await harness.Consumed.Any<OrderPlaced>());
+        Assert.True(await harness.Consumed.Any<OrderAccepted>());
+        Assert.True(await harness.Consumed.Any<DriverAssigned>());
+        Assert.True(await harness.Consumed.Any<OrderPickedUp>());
         Assert.True(await harness.Consumed.Any<OrderDelivered>());
 
         var view = await store.GetAsync(orderId);
         Assert.NotNull(view);
         Assert.Equal(TrackingStage.Delivered, view!.Stage);
+
+        await StopAsync(provider);
     }
 
     [Fact]
     public async Task OrderRefunded_projects_the_refunded_terminal_stage()
     {
         var (harness, provider, store) = await StartHarnessAsync();
-        await using var _ = provider;
 
         var orderId = Guid.NewGuid();
         await harness.Bus.Publish(NewPlaced(orderId));
         await harness.Bus.Publish(new OrderRefunded(orderId, Corr));
 
+        Assert.True(await harness.Consumed.Any<OrderPlaced>());
         Assert.True(await harness.Consumed.Any<OrderRefunded>());
 
         var view = await store.GetAsync(orderId);
         Assert.NotNull(view);
         Assert.Equal(TrackingStage.Refunded, view!.Stage);
+
+        await StopAsync(provider);
     }
 
     [Fact]
     public async Task Redelivered_event_is_idempotent_and_does_not_regress_the_stage()
     {
         var (harness, provider, store) = await StartHarnessAsync();
-        await using var _ = provider;
 
         var orderId = Guid.NewGuid();
         await harness.Bus.Publish(NewPlaced(orderId));
@@ -96,23 +110,28 @@ public class TrackingConsumerHarnessTests
         await harness.Bus.Publish(accepted);
         await harness.Bus.Publish(accepted);
 
+        Assert.True(await harness.Consumed.Any<OrderPlaced>());
         Assert.True(await harness.Consumed.Any<OrderDelivered>());
+        // Both accepted redeliveries must be consumed before we assert + tear down.
+        Assert.True(await harness.Consumed.SelectAsync<OrderAccepted>().Count() >= 2);
 
         var view = await store.GetAsync(orderId);
         Assert.NotNull(view);
         Assert.Equal(TrackingStage.Delivered, view!.Stage);
+
+        await StopAsync(provider);
     }
 
     [Fact]
     public async Task PaymentSettled_keeps_stage_1_and_OrderReady_keeps_stage_2()
     {
         var (harness, provider, store) = await StartHarnessAsync();
-        await using var _ = provider;
 
         var orderId = Guid.NewGuid();
         await harness.Bus.Publish(NewPlaced(orderId));
         await harness.Bus.Publish(new PaymentSettled(orderId, Corr));
 
+        Assert.True(await harness.Consumed.Any<OrderPlaced>());
         Assert.True(await harness.Consumed.Any<PaymentSettled>());
         var afterPayment = await store.GetAsync(orderId);
         Assert.NotNull(afterPayment);
@@ -121,10 +140,13 @@ public class TrackingConsumerHarnessTests
         await harness.Bus.Publish(new OrderAccepted(orderId, Corr));
         await harness.Bus.Publish(new OrderReady(orderId, Corr));
 
+        Assert.True(await harness.Consumed.Any<OrderAccepted>());
         Assert.True(await harness.Consumed.Any<OrderReady>());
         var afterReady = await store.GetAsync(orderId);
         Assert.NotNull(afterReady);
         Assert.Equal(TrackingStage.Preparing, afterReady!.Stage);
+
+        await StopAsync(provider);
     }
 
     private static OrderPlaced NewPlaced(Guid orderId) => new(
