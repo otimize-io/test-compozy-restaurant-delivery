@@ -34,6 +34,8 @@ public sealed class DriverOrderService(OrderDbContext db, IPublishEndpoint publi
         }
 
         await publishEndpoint.Publish(new OrderPickedUp(orderId, order.Value.CorrelationId), cancellationToken);
+        // Flush the EF bus outbox so the event is actually delivered (see RestaurantOrderService).
+        await db.SaveChangesAsync(cancellationToken);
         return DriverTransitionResult.Accepted;
     }
 
@@ -57,6 +59,7 @@ public sealed class DriverOrderService(OrderDbContext db, IPublishEndpoint publi
         }
 
         await publishEndpoint.Publish(new OrderDelivered(orderId, order.Value.CorrelationId), cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
         return DriverTransitionResult.Accepted;
     }
 

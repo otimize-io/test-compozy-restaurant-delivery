@@ -34,6 +34,9 @@ public sealed class RestaurantOrderService(OrderDbContext db, IPublishEndpoint p
         }
 
         await publishEndpoint.Publish(new OrderAccepted(orderId, order.Value.CorrelationId), cancellationToken);
+        // Flush the EF bus outbox: published from an HTTP scope (not a consumer), the event is only
+        // delivered once the OrderDbContext is saved (UseBusOutbox). Without this it is silently dropped.
+        await db.SaveChangesAsync(cancellationToken);
         return RestaurantTransitionResult.Accepted;
     }
 
@@ -57,6 +60,7 @@ public sealed class RestaurantOrderService(OrderDbContext db, IPublishEndpoint p
         }
 
         await publishEndpoint.Publish(new OrderReady(orderId, order.Value.CorrelationId), cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
         return RestaurantTransitionResult.Accepted;
     }
 

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: API Gateway/BFF + SignalR hub + E2E happy-path test
 type: backend
 complexity: high
@@ -38,11 +38,11 @@ journey across the running stack.
 </requirements>
 
 ## Subtasks
-- [ ] 14.1 Configure YARP routing/aggregation to the services.
-- [ ] 14.2 Implement the role switcher (`X-Demo-Role` + pre-seeded identities).
-- [ ] 14.3 Implement the SignalR hub fanning out Tracking status to groups.
-- [ ] 14.4 Implement reconnect resync via the current-status read.
-- [ ] 14.5 Add the end-to-end happy-path API test.
+- [x] 14.1 Configure YARP routing/aggregation to the services.
+- [x] 14.2 Implement the role switcher (`X-Demo-Role` + pre-seeded identities).
+- [x] 14.3 Implement the SignalR hub fanning out Tracking status to groups.
+- [x] 14.4 Implement reconnect resync via the current-status read.
+- [x] 14.5 Add the end-to-end happy-path API test.
 
 ## Implementation Details
 Create the gateway under `src/Gateway/`. Reference TechSpec "System Architecture" (edge/BFF),
@@ -69,14 +69,23 @@ service endpoints (task_04/05/06/07/08/10).
 
 ## Tests
 - Unit tests:
-  - [ ] A request with `X-Demo-Role: restaurant` is routed/authorized as the seeded restaurant identity.
-  - [ ] An unknown route returns 404 from the gateway.
-  - [ ] The hub places a subscriber into the correct per-order group.
+  - [x] A request with `X-Demo-Role: restaurant` is routed/authorized as the seeded restaurant identity.
+  - [x] An unknown route returns 404 from the gateway.
+  - [x] The hub places a subscriber into the correct per-order group.
 - Integration tests:
-  - [ ] E2E happy path over the composed stack: place → pay (callback) → accept → ready → assign → pickup → deliver reaches `Delivered`, and `OrderStatusChanged` is pushed for each stage.
-  - [ ] On hub reconnect, the current status is re-fetched and matches the latest stage.
+  - [x] E2E happy path over the composed stack: place → pay (callback) → accept → ready → assign → pickup → deliver reaches `Delivered`, and `OrderStatusChanged` is pushed for each stage.
+  - [x] On hub reconnect, the current status is re-fetched and matches the latest stage.
 - Test coverage target: >=80%
 - All tests must pass
+
+> Done: Gateway (YARP routing + role switcher + SignalR hub consuming order events → push
+> `OrderStatusChanged`); 27 tests (22 gateway unit/config + 5 full-stack E2E), Gateway coverage 94.66%.
+> The full-stack E2E hosts Order/Payment/Dispatch/Tracking/Gateway in-process over a REAL RabbitMQ +
+> Postgres/Redis (Testcontainers) and drives the whole journey through the gateway HTTP path with a real
+> SignalR client. **Bug fixed during integration:** the Order accept/ready/pickup/deliver endpoints
+> published to the EF bus outbox but never called `SaveChangesAsync`, so events were never delivered in
+> production (per-service tests masked it via the in-memory harness). Added the outbox flush; the E2E now
+> drives the real endpoints (no workaround).
 
 ## Success Criteria
 - All tests passing

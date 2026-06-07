@@ -49,3 +49,9 @@ app.UsePlatform();
 app.MapPaymentEndpoints();
 
 app.Run();
+
+/// <summary>
+/// Exposed so the service can be hosted in integration/E2E tests via
+/// <c>WebApplicationFactory&lt;Program&gt;</c> (a standard, minimal test-visibility hook; task_14 E2E).
+/// </summary>
+public partial class Program;
