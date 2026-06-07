@@ -167,12 +167,13 @@ docker compose up -d --wait rabbitmq postgres mongo elasticsearch redis
 ### Full stack (all services + gateway + web)
 ```bash
 docker compose build                 # builds 9 images (7 services + gateway + web)
-# MassTransit 9 requires a commercial license for the RabbitMQ transport (see Known limitations):
-export MT_LICENSE="<your-masstransit-license-key>"   # PowerShell: $env:MT_LICENSE="..."
-docker compose up -d --wait --wait-timeout 300
+docker compose up -d --wait --wait-timeout 300   # all 14 containers; no license required
 # Web UI:  http://localhost:4200      Gateway API: http://localhost:8080
 docker compose down
 ```
+
+Verified end-to-end on the composed stack: a live journey through the gateway
+(`place → settle → accept → ready → pickup → deliver`) reaches tracking stage 5 (Delivered).
 
 ### Build & test (.NET)
 ```bash
@@ -212,10 +213,9 @@ infra/         postgres init (creates order + payment databases)
   `coverlet.runsettings`).
 
 ## Known limitations
-- **MassTransit 9 license:** the services pin MassTransit 9.1.2, whose RabbitMQ transport is commercially
-  licensed and will not start the bus without `MT_LICENSE`/`MT_LICENSE_PATH`. Unit/integration tests pass via
-  the unlicensed in-memory harness; the containerized full-stack run needs a key (wired via the `MT_LICENSE`
-  env var — no code change) or a downgrade to MassTransit 8 (Apache-2.0).
+- **Messaging library:** the services use **MassTransit 8.5.10 (Apache-2.0)** so the RabbitMQ transport and
+  the full `docker compose up` run require **no license**. (MassTransit 9 made the RabbitMQ transport
+  commercial — needing `MT_LICENSE` — which is why this project pins v8.)
 - **Mocked PoC:** payment, maps/ETA, and notifications are mocks behind swappable ports; no real money or PII.
 - **Scope:** one happy path + one compensation (no-driver → refund); broad edge cases are out of scope (see
   `_prd.md` Non-Goals).
