@@ -10,7 +10,8 @@ Stack: **.NET 10 microservices + Angular 20**. Async backbone: **RabbitMQ / Mass
 orchestrated **saga** (transactional outbox). Polyglot persistence per service. Planning artifacts live under
 [`.compozy/tasks/restaurant-delivery-mvp/`](.compozy/tasks/restaurant-delivery-mvp/) (`_idea.md`, `_prd.md`,
 `_techspec.md`, `_tasks.md`, `adrs/`). Consolidated architecture: [`SYSTEM_DESIGN.md`](SYSTEM_DESIGN.md).
-UI conventions: see [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md).
+UI conventions: see [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md). Architecture walkthrough (video script, PT):
+[`ROTEIRO_VIDEO_ARQUITETURA.md`](ROTEIRO_VIDEO_ARQUITETURA.md).
 
 ---
 
