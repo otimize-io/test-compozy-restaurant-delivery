@@ -1,0 +1,79 @@
+<section class="container">
+  <div class="head">
+    <div>
+      <h1>Driver — assignments</h1>
+      <p class="muted">Pick up ready orders and confirm delivery.</p>
+    </div>
+    <div class="head-actions">
+      <span
+        class="conn"
+        [class.conn--live]="connectionState() === 'connected'"
+        [attr.data-state]="connectionState()"
+        data-testid="conn-state"
+      >
+        @switch (connectionState()) {
+          @case ('connected') { ● Live }
+          @case ('connecting') { ◌ Connecting… }
+          @case ('reconnecting') { ◌ Reconnecting… }
+          @default { ○ Offline }
+        }
+      </span>
+      <button type="button" class="btn" data-testid="refresh" (click)="refresh()">Refresh</button>
+    </div>
+  </div>
+
+  @if (error()) {
+    <p class="error card" data-testid="assignments-error">{{ error() }}</p>
+  }
+
+  @if (loading() && isEmpty()) {
+    <p class="muted status" data-testid="assignments-loading">Loading your assignments…</p>
+  }
+
+  <div class="list" data-testid="assignments">
+    @for (a of assignments(); track a.orderId) {
+      <article class="assignment card" data-testid="assignment-card" [attr.data-order-id]="a.orderId">
+        <div class="assignment__main">
+          <div class="assignment__head">
+            <code class="assignment__id">#{{ a.orderId.slice(0, 8) }}</code>
+            <span class="badge">{{ statusLabels[a.status] }}</span>
+          </div>
+          <p class="assignment__driver">
+            <span class="label">Driver</span> {{ a.driverName }}
+          </p>
+          <p class="assignment__eta">
+            <span class="label">ETA</span> {{ a.etaMinutes }} min
+          </p>
+        </div>
+        <div class="assignment__actions">
+          @if (canPickup(a)) {
+            <button
+              type="button"
+              class="btn btn-primary"
+              data-testid="pickup-btn"
+              [disabled]="isPending(a.orderId)"
+              (click)="pickup(a)"
+            >
+              Pick up
+            </button>
+          }
+          @if (canDeliver(a)) {
+            <button
+              type="button"
+              class="btn btn-primary"
+              data-testid="deliver-btn"
+              [disabled]="isPending(a.orderId)"
+              (click)="deliver(a)"
+            >
+              Deliver
+            </button>
+          }
+        </div>
+      </article>
+    } @empty {
+      @if (!loading()) {
+        <p class="muted empty" data-testid="empty-assignments">No active assignments right now.</p>
+      }
+    }
+  </div>
+</section>

@@ -3,8 +3,8 @@ import { ShellComponent } from './shell/shell.component';
 
 /**
  * Top-level routes. Everything renders inside the {@link ShellComponent} (top bar + role switcher).
- * Only the consumer journey is implemented in this task; restaurant/driver land on clean placeholders
- * that task_16 fills in (reusing the shell + SignalR store).
+ * The consumer journey, the restaurant order queue, and the driver assignment view are all implemented;
+ * the restaurant/driver views are lazy-loaded standalone components that reuse the shell + SignalR store.
  */
 export const routes: Routes = [
   {
@@ -18,14 +18,14 @@ export const routes: Routes = [
       },
       {
         path: 'restaurant',
-        loadComponent: () => import('./shell/placeholder.component').then((m) => m.PlaceholderComponent),
-        data: { title: 'restaurant' },
+        loadComponent: () =>
+          import('./restaurant/restaurant-queue.component').then((m) => m.RestaurantQueueComponent),
         title: 'Restaurant',
       },
       {
         path: 'driver',
-        loadComponent: () => import('./shell/placeholder.component').then((m) => m.PlaceholderComponent),
-        data: { title: 'driver' },
+        loadComponent: () =>
+          import('./driver/driver-assignments.component').then((m) => m.DriverAssignmentsComponent),
         title: 'Driver',
       },
       { path: '**', redirectTo: 'consumer' },

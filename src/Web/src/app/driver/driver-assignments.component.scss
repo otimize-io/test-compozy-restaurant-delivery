@@ -1,0 +1,111 @@
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.head h1 {
+  margin: 0;
+}
+
+.head .muted {
+  margin: 0.25rem 0 0;
+}
+
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.conn {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+}
+
+.conn--live {
+  color: var(--ok);
+  border-color: rgba(27, 166, 114, 0.4);
+}
+
+.status {
+  margin-top: 1rem;
+}
+
+.error {
+  padding: 0.9rem 1.1rem;
+  border-left: 4px solid var(--danger);
+  color: var(--danger);
+  margin: 1rem 0 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 1.5rem;
+}
+
+.assignment {
+  padding: 1rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.assignment__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+
+.assignment__id {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.assignment__driver,
+.assignment__eta {
+  margin: 0.1rem 0;
+  font-size: 0.95rem;
+}
+
+.label {
+  display: inline-block;
+  min-width: 3.2rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.assignment__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  white-space: nowrap;
+}
+
+.empty {
+  margin-top: 1.5rem;
+}

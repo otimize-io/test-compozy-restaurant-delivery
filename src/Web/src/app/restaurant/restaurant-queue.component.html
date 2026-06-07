@@ -1,0 +1,101 @@
+<section class="container">
+  <div class="queue-head">
+    <div>
+      <h1>Restaurant — order queue</h1>
+      <p class="muted">Accept new orders and mark them ready for pickup.</p>
+    </div>
+    <div class="head-actions">
+      <span
+        class="conn"
+        [class.conn--live]="connectionState() === 'connected'"
+        [attr.data-state]="connectionState()"
+        data-testid="conn-state"
+      >
+        @switch (connectionState()) {
+          @case ('connected') { ● Live }
+          @case ('connecting') { ◌ Connecting… }
+          @case ('reconnecting') { ◌ Reconnecting… }
+          @default { ○ Offline }
+        }
+      </span>
+      <button type="button" class="btn" data-testid="refresh" (click)="refresh()">Refresh</button>
+    </div>
+  </div>
+
+  @if (error()) {
+    <p class="error card" data-testid="queue-error">{{ error() }}</p>
+  }
+
+  @if (loading() && isEmpty()) {
+    <p class="muted status" data-testid="queue-loading">Loading the order queue…</p>
+  }
+
+  <div class="board">
+    <!-- New (Paid, awaiting accept) -->
+    <section class="column" data-testid="column-new" data-column="new">
+      <h2 class="column__title">New <span class="count">{{ queue().new.length }}</span></h2>
+      @for (order of queue().new; track order.orderId) {
+        <article class="order card" data-testid="order-card" [attr.data-order-id]="order.orderId">
+          <div class="order__head">
+            <code class="order__id">#{{ order.orderId.slice(0, 8) }}</code>
+            <span class="badge">{{ statusLabels[order.status] }}</span>
+          </div>
+          <p class="order__total">{{ order.total | currency }}</p>
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-testid="accept-btn"
+            [disabled]="isPending(order.orderId)"
+            (click)="accept(order)"
+          >
+            Accept
+          </button>
+        </article>
+      } @empty {
+        <p class="muted empty" data-testid="empty-new">No new orders.</p>
+      }
+    </section>
+
+    <!-- In-Progress (Accepted / Preparing) -->
+    <section class="column" data-testid="column-in-progress" data-column="in-progress">
+      <h2 class="column__title">In progress <span class="count">{{ queue().inProgress.length }}</span></h2>
+      @for (order of queue().inProgress; track order.orderId) {
+        <article class="order card" data-testid="order-card" [attr.data-order-id]="order.orderId">
+          <div class="order__head">
+            <code class="order__id">#{{ order.orderId.slice(0, 8) }}</code>
+            <span class="badge">{{ statusLabels[order.status] }}</span>
+          </div>
+          <p class="order__total">{{ order.total | currency }}</p>
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-testid="ready-btn"
+            [disabled]="isPending(order.orderId)"
+            (click)="markReady(order)"
+          >
+            Mark ready
+          </button>
+        </article>
+      } @empty {
+        <p class="muted empty" data-testid="empty-in-progress">Nothing being prepared.</p>
+      }
+    </section>
+
+    <!-- Ready (ReadyForPickup) -->
+    <section class="column" data-testid="column-ready" data-column="ready">
+      <h2 class="column__title">Ready <span class="count">{{ queue().ready.length }}</span></h2>
+      @for (order of queue().ready; track order.orderId) {
+        <article class="order card" data-testid="order-card" [attr.data-order-id]="order.orderId">
+          <div class="order__head">
+            <code class="order__id">#{{ order.orderId.slice(0, 8) }}</code>
+            <span class="badge badge--ok">{{ statusLabels[order.status] }}</span>
+          </div>
+          <p class="order__total">{{ order.total | currency }}</p>
+          <p class="muted order__hint">Awaiting driver pickup.</p>
+        </article>
+      } @empty {
+        <p class="muted empty" data-testid="empty-ready">No orders ready.</p>
+      }
+    </section>
+  </div>
+</section>

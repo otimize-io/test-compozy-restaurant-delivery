@@ -103,6 +103,67 @@ export const TrackingStage = {
   Refunded: 99,
 } as const;
 
+/**
+ * Order lifecycle status codes as serialized by the Order service (`OrderStatus` enum, int over the wire).
+ * Mirrors the server enum order exactly; used by the restaurant queue and driver assignment views.
+ */
+export const OrderStatusCode = {
+  Placed: 0,
+  AwaitingPayment: 1,
+  Paid: 2,
+  Accepted: 3,
+  Preparing: 4,
+  ReadyForPickup: 5,
+  DriverAssigned: 6,
+  PickedUp: 7,
+  Delivered: 8,
+  Faulted: 9,
+  NoDriverRefunded: 10,
+} as const;
+
+/** Human-readable labels for the order status codes (functional-clean restaurant/driver UIs). */
+export const ORDER_STATUS_LABELS: Readonly<Record<number, string>> = {
+  [OrderStatusCode.Placed]: 'Placed',
+  [OrderStatusCode.AwaitingPayment]: 'Awaiting payment',
+  [OrderStatusCode.Paid]: 'Paid',
+  [OrderStatusCode.Accepted]: 'Accepted',
+  [OrderStatusCode.Preparing]: 'Preparing',
+  [OrderStatusCode.ReadyForPickup]: 'Ready for pickup',
+  [OrderStatusCode.DriverAssigned]: 'Driver assigned',
+  [OrderStatusCode.PickedUp]: 'Picked up',
+  [OrderStatusCode.Delivered]: 'Delivered',
+  [OrderStatusCode.Faulted]: 'Faulted',
+  [OrderStatusCode.NoDriverRefunded]: 'Refunded (no driver)',
+};
+
+/** A single row in the restaurant order queue (`GET /api/restaurant/orders`). */
+export interface RestaurantQueueItem {
+  orderId: string;
+  status: number;
+  total: number;
+  correlationId: string;
+}
+
+/**
+ * The restaurant order queue grouped into the three columns the restaurant view renders
+ * (`GET /api/restaurant/orders`): New (Paid), In-Progress (Accepted/Preparing), Ready (ReadyForPickup).
+ */
+export interface RestaurantQueueResponse {
+  new: RestaurantQueueItem[];
+  inProgress: RestaurantQueueItem[];
+  ready: RestaurantQueueItem[];
+}
+
+/** A driver assignment row (`GET /api/driver/assignments`): an assigned, not-yet-delivered order. */
+export interface DriverAssignmentItem {
+  orderId: string;
+  status: number;
+  driverId: string;
+  driverName: string;
+  etaMinutes: number;
+  correlationId: string;
+}
+
 /** A display step in the 5-stage consumer tracking bar (PRD F8). */
 export interface TrackingStep {
   stage: number;

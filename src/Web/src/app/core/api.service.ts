@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   DemoIdentity,
+  DriverAssignmentItem,
   MenuItem,
   OrderStatus,
   OrderSummary,
@@ -11,6 +12,7 @@ import {
   PlaceOrderRequest,
   PlaceOrderResponse,
   Restaurant,
+  RestaurantQueueResponse,
 } from './models';
 
 /**
@@ -64,5 +66,35 @@ export class ApiService {
   /** `GET /api/orders/{id}/status` — the 5-stage tracking view; used to resync on (re)connect (ADR-007). */
   getOrderStatus(orderId: string): Observable<OrderStatus> {
     return this.http.get<OrderStatus>(`${this.base}/api/orders/${orderId}/status`);
+  }
+
+  /** `GET /api/restaurant/orders` — the restaurant order queue grouped New/In-Progress/Ready (PRD F5). */
+  getRestaurantQueue(): Observable<RestaurantQueueResponse> {
+    return this.http.get<RestaurantQueueResponse>(`${this.base}/api/restaurant/orders`);
+  }
+
+  /** `POST /api/orders/{id}/accept` — restaurant accepts a New order (PRD F5). Returns 202 (async). */
+  acceptOrder(orderId: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/api/orders/${orderId}/accept`, {});
+  }
+
+  /** `POST /api/orders/{id}/ready` — restaurant marks an In-Progress order ready (PRD F5). Returns 202. */
+  markOrderReady(orderId: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/api/orders/${orderId}/ready`, {});
+  }
+
+  /** `GET /api/driver/assignments` — the driver's current assignments with driver/ETA (PRD F7). */
+  getDriverAssignments(): Observable<DriverAssignmentItem[]> {
+    return this.http.get<DriverAssignmentItem[]>(`${this.base}/api/driver/assignments`);
+  }
+
+  /** `POST /api/orders/{id}/pickup` — driver confirms pickup (PRD F7). Returns 202 (async). */
+  pickupOrder(orderId: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/api/orders/${orderId}/pickup`, {});
+  }
+
+  /** `POST /api/orders/{id}/deliver` — driver confirms delivery (PRD F7). Returns 202 (async). */
+  deliverOrder(orderId: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/api/orders/${orderId}/deliver`, {});
   }
 }

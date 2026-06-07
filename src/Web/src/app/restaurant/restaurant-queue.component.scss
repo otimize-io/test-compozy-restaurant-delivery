@@ -1,0 +1,140 @@
+.queue-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.queue-head h1 {
+  margin: 0;
+}
+
+.queue-head .muted {
+  margin: 0.25rem 0 0;
+}
+
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.conn {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+}
+
+.conn--live {
+  color: var(--ok);
+  border-color: rgba(27, 166, 114, 0.4);
+}
+
+.status {
+  margin-top: 1rem;
+}
+
+.error {
+  padding: 0.9rem 1.1rem;
+  border-left: 4px solid var(--danger);
+  color: var(--danger);
+  margin: 1rem 0 0;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 760px) {
+  .board {
+    grid-template-columns: 1fr;
+  }
+}
+
+.column {
+  background: rgba(20, 28, 38, 0.02);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.column__title {
+  margin: 0;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.count {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.05rem 0.5rem;
+}
+
+.order {
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.order__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.order__id {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.order__total {
+  margin: 0;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.order__hint {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  white-space: nowrap;
+}
+
+.badge--ok {
+  color: var(--ok);
+  border-color: rgba(27, 166, 114, 0.4);
+}
+
+.empty {
+  margin: 0;
+  font-size: 0.85rem;
+  padding: 0.5rem 0;
+}

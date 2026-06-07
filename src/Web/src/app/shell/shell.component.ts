@@ -1,15 +1,15 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { DemoRole } from '../core/models';
 import { RoleService } from '../core/role.service';
 import { CartService } from '../consumer/cart.service';
 
 /**
  * The app shell: a top bar with the role switcher (consumer/restaurant/driver) and a cart indicator,
- * plus the router outlet. Switching role updates {@link RoleService}, which the role interceptor reads
- * to stamp `X-Demo-Role` on every gateway call (ADR-002). Only the consumer view is implemented in this
- * task; restaurant/driver route to placeholders filled by task_16.
+ * plus the router outlet. Switching role updates {@link RoleService} (so the role interceptor stamps
+ * `X-Demo-Role` on every gateway call, ADR-002) and navigates to that role's view, so one app serves
+ * all three views: consumer journey, restaurant order queue, and driver assignments.
  */
 @Component({
   selector: 'app-shell',
@@ -21,6 +21,7 @@ import { CartService } from '../consumer/cart.service';
 export class ShellComponent {
   private readonly roleService = inject(RoleService);
   private readonly cart = inject(CartService);
+  private readonly router = inject(Router);
 
   readonly roles = this.roleService.roles;
   readonly role = this.roleService.role;
@@ -34,7 +35,15 @@ export class ShellComponent {
     driver: 'Driver',
   };
 
+  /** The landing route for each role view (selecting a chip navigates here). */
+  private readonly roleRoutes: Record<DemoRole, string> = {
+    consumer: '/consumer',
+    restaurant: '/restaurant',
+    driver: '/driver',
+  };
+
   switchRole(role: DemoRole): void {
     this.roleService.setRole(role);
+    void this.router.navigate([this.roleRoutes[role]]);
   }
 }

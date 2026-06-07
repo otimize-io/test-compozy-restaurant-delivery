@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Angular restaurant & driver views
 type: frontend
 complexity: medium
@@ -31,10 +31,10 @@ Both reuse the shell and SignalR store so one order updates live across all thre
 </requirements>
 
 ## Subtasks
-- [ ] 16.1 Implement the restaurant order-queue view with accept and ready actions.
-- [ ] 16.2 Implement the driver assignment view with pickup and deliver actions.
-- [ ] 16.3 Wire both views to the shared SignalR status store for live updates.
-- [ ] 16.4 Ensure switching roles shows the same order advancing across views.
+- [x] 16.1 Implement the restaurant order-queue view with accept and ready actions.
+- [x] 16.2 Implement the driver assignment view with pickup and deliver actions.
+- [x] 16.3 Wire both views to the shared SignalR status store for live updates.
+- [x] 16.4 Ensure switching roles shows the same order advancing across views.
 
 ## Implementation Details
 Add the views under `src/Web/src/app/restaurant/` and `src/Web/src/app/driver/`, reusing the shell
@@ -60,14 +60,19 @@ and SignalR store from task_15. Reference TechSpec "API Endpoints" (restaurant/d
 
 ## Tests
 - Unit tests:
-  - [ ] Clicking "Accept" on a New order calls the gateway accept endpoint and moves the card to In-Progress.
-  - [ ] Clicking "Ready" calls the ready endpoint and moves the card to Ready.
-  - [ ] Clicking "Pickup" then "Deliver" in the driver view calls the respective endpoints and clears the assignment.
-  - [ ] A restaurant action emits an update that the consumer tracking store reflects (shared store).
+  - [x] Clicking "Accept" on a New order calls the gateway accept endpoint and moves the card to In-Progress.
+  - [x] Clicking "Ready" calls the ready endpoint and moves the card to Ready.
+  - [x] Clicking "Pickup" then "Deliver" in the driver view calls the respective endpoints and clears the assignment.
+  - [x] A restaurant action emits an update that the consumer tracking store reflects (shared store).
 - Integration tests:
-  - [ ] Driving one order across views: accepting in the restaurant view advances the consumer tracking bar live (mocked gateway/hub).
+  - [x] Driving one order across views: accepting in the restaurant view advances the consumer tracking bar live (mocked gateway/hub).
 - Test coverage target: >=80%
 - All tests must pass
+
+> Done: restaurant queue view (New/In-Progress/Ready + accept/mark-ready) and driver view
+> (assignments + pickup/deliver), wired into the shell + role switcher; both reuse the gateway
+> ApiService and a `QueueLiveStore` (same SignalR plumbing as the consumer) so one order advances
+> live across all three views. `ng build` clean; **103 Jest tests pass, 97.66% line coverage**.
 
 ## Success Criteria
 - All tests passing

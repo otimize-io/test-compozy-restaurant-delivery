@@ -104,6 +104,60 @@ describe('ApiService', () => {
     req.flush([]);
   });
 
+  it('getRestaurantQueue hits the restaurant queue endpoint and returns the grouped queue', () => {
+    const queue = {
+      new: [{ orderId: 'o1', status: 2, total: 19, correlationId: 'c1' }],
+      inProgress: [],
+      ready: [],
+    };
+    let result: unknown;
+    api.getRestaurantQueue().subscribe((r) => (result = r));
+    const req = http.expectOne(`${base}/api/restaurant/orders`);
+    expect(req.request.method).toBe('GET');
+    req.flush(queue);
+    expect(result).toEqual(queue);
+  });
+
+  it('acceptOrder POSTs to the accept endpoint (202 async)', () => {
+    api.acceptOrder('o1').subscribe();
+    const req = http.expectOne(`${base}/api/orders/o1/accept`);
+    expect(req.request.method).toBe('POST');
+    req.flush(null, { status: 202, statusText: 'Accepted' });
+  });
+
+  it('markOrderReady POSTs to the ready endpoint (202 async)', () => {
+    api.markOrderReady('o1').subscribe();
+    const req = http.expectOne(`${base}/api/orders/o1/ready`);
+    expect(req.request.method).toBe('POST');
+    req.flush(null, { status: 202, statusText: 'Accepted' });
+  });
+
+  it('getDriverAssignments hits the assignments endpoint and returns the list', () => {
+    const assignments = [
+      { orderId: 'o1', status: 6, driverId: 'd1', driverName: 'Alice', etaMinutes: 12, correlationId: 'c1' },
+    ];
+    let result: unknown;
+    api.getDriverAssignments().subscribe((r) => (result = r));
+    const req = http.expectOne(`${base}/api/driver/assignments`);
+    expect(req.request.method).toBe('GET');
+    req.flush(assignments);
+    expect(result).toEqual(assignments);
+  });
+
+  it('pickupOrder POSTs to the pickup endpoint (202 async)', () => {
+    api.pickupOrder('o1').subscribe();
+    const req = http.expectOne(`${base}/api/orders/o1/pickup`);
+    expect(req.request.method).toBe('POST');
+    req.flush(null, { status: 202, statusText: 'Accepted' });
+  });
+
+  it('deliverOrder POSTs to the deliver endpoint (202 async)', () => {
+    api.deliverOrder('o1').subscribe();
+    const req = http.expectOne(`${base}/api/orders/o1/deliver`);
+    expect(req.request.method).toBe('POST');
+    req.flush(null, { status: 202, statusText: 'Accepted' });
+  });
+
   it('stamps the X-Demo-Role header from the RoleService on outgoing requests', () => {
     roles.setRole('driver');
     api.searchRestaurants('x').subscribe();

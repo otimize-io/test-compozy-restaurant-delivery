@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { MenuItem, Restaurant } from '../core/models';
 import { RoleService } from '../core/role.service';
 import { CartService } from '../consumer/cart.service';
@@ -10,15 +10,25 @@ describe('ShellComponent', () => {
   let component: ShellComponent;
   let roles: RoleService;
   let cart: CartService;
+  let router: Router;
 
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
       imports: [ShellComponent],
-      providers: [RoleService, CartService, provideRouter([])],
+      providers: [
+        RoleService,
+        CartService,
+        provideRouter([
+          { path: 'consumer', children: [] },
+          { path: 'restaurant', children: [] },
+          { path: 'driver', children: [] },
+        ]),
+      ],
     });
     roles = TestBed.inject(RoleService);
     cart = TestBed.inject(CartService);
+    router = TestBed.inject(Router);
     fixture = TestBed.createComponent(ShellComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -39,6 +49,19 @@ describe('ShellComponent', () => {
     expect(roles.current()).toBe('driver');
     expect(component.role()).toBe('driver');
     expect(fixture.nativeElement.querySelector('.role-chip--active').getAttribute('data-role')).toBe('driver');
+  });
+
+  it('selecting the restaurant/driver chip navigates to that role view', async () => {
+    const navigate = jest.spyOn(router, 'navigate');
+
+    fixture.nativeElement.querySelector('[data-role="restaurant"]').click();
+    expect(navigate).toHaveBeenCalledWith(['/restaurant']);
+
+    fixture.nativeElement.querySelector('[data-role="driver"]').click();
+    expect(navigate).toHaveBeenCalledWith(['/driver']);
+
+    fixture.nativeElement.querySelector('[data-role="consumer"]').click();
+    expect(navigate).toHaveBeenCalledWith(['/consumer']);
   });
 
   it('shows the cart pill with the live count for the consumer role', () => {
