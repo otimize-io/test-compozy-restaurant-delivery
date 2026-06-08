@@ -107,8 +107,10 @@ describe('ApiService', () => {
   it('getRestaurantQueue hits the restaurant queue endpoint and returns the grouped queue', () => {
     const queue = {
       new: [{ orderId: 'o1', status: 2, total: 19, correlationId: 'c1' }],
-      inProgress: [],
-      ready: [],
+      cooking: [],
+      awaitingDriver: [],
+      outForDelivery: [],
+      delivered: [],
     };
     let result: unknown;
     api.getRestaurantQueue().subscribe((r) => (result = r));

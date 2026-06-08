@@ -9,7 +9,10 @@ public sealed record OrderPlaced(
     Guid ConsumerId,
     Guid RestaurantId,
     decimal Total,
-    IReadOnlyList<OrderLine> Items) : IIntegrationEvent;
+    IReadOnlyList<OrderLine> Items,
+    // Where the restaurant is, carried so the saga can hand it to Dispatch for nearest-driver matching and a
+    // realistic ETA. Optional (defaults to the origin) so callers that do not supply it still construct cleanly.
+    GeoPoint RestaurantLocation = default) : IIntegrationEvent;
 
 public sealed record PaymentAccepted(Guid OrderId, string CorrelationId) : IIntegrationEvent;
 

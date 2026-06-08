@@ -136,22 +136,31 @@ export const ORDER_STATUS_LABELS: Readonly<Record<number, string>> = {
   [OrderStatusCode.NoDriverRefunded]: 'Refunded (no driver)',
 };
 
-/** A single row in the restaurant order queue (`GET /api/restaurant/orders`). */
+/**
+ * A single row in the restaurant order board (`GET /api/restaurant/orders`). Carries the assigned driver's
+ * name and ETA once Dispatch has matched one (null before assignment) so the restaurant can follow the
+ * order through pickup and delivery.
+ */
 export interface RestaurantQueueItem {
   orderId: string;
   status: number;
   total: number;
   correlationId: string;
+  driverName?: string | null;
+  etaMinutes?: number | null;
 }
 
 /**
- * The restaurant order queue grouped into the three columns the restaurant view renders
- * (`GET /api/restaurant/orders`): New (Paid), In-Progress (Accepted/Preparing), Ready (ReadyForPickup).
+ * The restaurant order board grouped into the columns the restaurant view renders so it can follow each
+ * order end to end (`GET /api/restaurant/orders`): New (Paid), Cooking (Accepted/Preparing), AwaitingDriver
+ * (ReadyForPickup or a driver assigned and heading over), OutForDelivery (PickedUp), Delivered (recent).
  */
 export interface RestaurantQueueResponse {
   new: RestaurantQueueItem[];
-  inProgress: RestaurantQueueItem[];
-  ready: RestaurantQueueItem[];
+  cooking: RestaurantQueueItem[];
+  awaitingDriver: RestaurantQueueItem[];
+  outForDelivery: RestaurantQueueItem[];
+  delivered: RestaurantQueueItem[];
 }
 
 /** A driver assignment row (`GET /api/driver/assignments`): an assigned, not-yet-delivered order. */

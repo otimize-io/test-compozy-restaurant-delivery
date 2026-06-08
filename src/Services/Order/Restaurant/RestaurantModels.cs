@@ -18,15 +18,29 @@ public enum RestaurantTransitionResult
     Accepted,
 }
 
-/// <summary>A single row in the restaurant order queue (TechSpec <c>GET /api/restaurant/orders</c>).</summary>
-public sealed record RestaurantQueueItem(Guid OrderId, OrderStatus Status, decimal Total, string CorrelationId);
+/// <summary>
+/// A single row in the restaurant order queue (<c>GET /api/restaurant/orders</c>). Carries the assigned
+/// driver's name and ETA once Dispatch has matched one (null before assignment) so the restaurant can follow
+/// the order through pickup and delivery.
+/// </summary>
+public sealed record RestaurantQueueItem(
+    Guid OrderId,
+    OrderStatus Status,
+    decimal Total,
+    string CorrelationId,
+    string? DriverName = null,
+    int? EtaMinutes = null);
 
 /// <summary>
-/// The restaurant order queue grouped by the three columns the restaurant view consumes
-/// (TechSpec "API Endpoints"): <c>New</c> (paid, awaiting accept), <c>In-Progress</c> (accepted/preparing),
-/// and <c>Ready</c> (ready for pickup / handed to the driver leg).
+/// The restaurant order board, grouped into the columns the restaurant view renders so it can follow each
+/// order end to end (PRD F5): <c>New</c> (paid, awaiting accept), <c>Cooking</c> (accepted/preparing),
+/// <c>AwaitingDriver</c> (ready for pickup / a driver has been assigned and is heading over),
+/// <c>OutForDelivery</c> (the driver picked it up), and <c>Delivered</c> (recently completed). Orders before
+/// payment and the terminal failure/refund states are not shown.
 /// </summary>
 public sealed record RestaurantQueueResponse(
     IReadOnlyList<RestaurantQueueItem> New,
-    IReadOnlyList<RestaurantQueueItem> InProgress,
-    IReadOnlyList<RestaurantQueueItem> Ready);
+    IReadOnlyList<RestaurantQueueItem> Cooking,
+    IReadOnlyList<RestaurantQueueItem> AwaitingDriver,
+    IReadOnlyList<RestaurantQueueItem> OutForDelivery,
+    IReadOnlyList<RestaurantQueueItem> Delivered);

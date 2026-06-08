@@ -64,37 +64,61 @@ public sealed class RestaurantOrderService(OrderDbContext db, IPublishEndpoint p
         return RestaurantTransitionResult.Accepted;
     }
 
+    /// <summary>How many recently-delivered orders the board keeps in the Delivered column.</summary>
+    private const int RecentDeliveredLimit = 10;
+
     /// <summary>
-    /// Returns the restaurant order queue grouped into New (Paid), In-Progress (Accepted/Preparing), and Ready
-    /// (ReadyForPickup). Orders before payment, terminal orders, and the driver/delivery leg are not shown.
+    /// Returns the restaurant order board grouped so the restaurant can follow each order end to end:
+    /// New (Paid), Cooking (Accepted/Preparing), AwaitingDriver (ReadyForPickup or a driver has been
+    /// assigned and is heading over), OutForDelivery (PickedUp), and the most recent Delivered orders.
+    /// Orders before payment and the terminal failure/refund states are not shown.
     /// </summary>
     public async Task<RestaurantQueueResponse> GetQueueAsync(CancellationToken cancellationToken = default)
     {
         var live = await LiveOrdersAsync(cancellationToken);
 
-        var newOrders = new List<RestaurantQueueItem>();
-        var inProgress = new List<RestaurantQueueItem>();
-        var ready = new List<RestaurantQueueItem>();
+        var newOrders = new List<LiveOrder>();
+        var cooking = new List<LiveOrder>();
+        var awaitingDriver = new List<LiveOrder>();
+        var outForDelivery = new List<LiveOrder>();
+        var delivered = new List<LiveOrder>();
 
-        foreach (var item in live)
+        foreach (var order in live)
         {
-            switch (item.Status)
+            switch (order.Item.Status)
             {
                 case OrderStatus.Paid:
-                    newOrders.Add(item);
+                    newOrders.Add(order);
                     break;
                 case OrderStatus.Accepted:
                 case OrderStatus.Preparing:
-                    inProgress.Add(item);
+                    cooking.Add(order);
                     break;
                 case OrderStatus.ReadyForPickup:
-                    ready.Add(item);
+                case OrderStatus.DriverAssigned:
+                    awaitingDriver.Add(order);
+                    break;
+                case OrderStatus.PickedUp:
+                    outForDelivery.Add(order);
+                    break;
+                case OrderStatus.Delivered:
+                    delivered.Add(order);
                     break;
             }
         }
 
-        return new RestaurantQueueResponse(newOrders, inProgress, ready);
+        // Active columns oldest-first (FIFO for the kitchen); Delivered shows only the most recent few.
+        return new RestaurantQueueResponse(
+            Oldest(newOrders),
+            Oldest(cooking),
+            Oldest(awaitingDriver),
+            Oldest(outForDelivery),
+            delivered.OrderByDescending(o => o.CreatedAt).Take(RecentDeliveredLimit)
+                .Select(o => o.Item).ToList());
     }
+
+    private static IReadOnlyList<RestaurantQueueItem> Oldest(IEnumerable<LiveOrder> orders) =>
+        orders.OrderBy(o => o.CreatedAt).Select(o => o.Item).ToList();
 
     private async Task<(OrderStatus Status, string CorrelationId)?> LookupAsync(
         Guid orderId, CancellationToken cancellationToken)
@@ -119,28 +143,46 @@ public sealed class RestaurantOrderService(OrderDbContext db, IPublishEndpoint p
         return (status, order.CorrelationId);
     }
 
-    private async Task<IReadOnlyList<RestaurantQueueItem>> LiveOrdersAsync(CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<LiveOrder>> LiveOrdersAsync(CancellationToken cancellationToken)
     {
         // Project orders left-joined to their saga state so the live (saga-derived) status drives the grouping,
-        // falling back to the persisted snapshot before the saga has recorded a state.
+        // falling back to the persisted snapshot before the saga has recorded a state. The assigned driver
+        // (name/ETA, set on DriverAssigned) rides along so the board can show who is handling the delivery.
         var rows = await db.Orders
             .AsNoTracking()
             .GroupJoin(
                 db.Set<OrderState>().AsNoTracking(),
                 o => o.Id,
                 s => s.CorrelationId,
-                (o, states) => new { o.Id, o.Status, o.Total, o.CorrelationId, States = states })
+                (o, states) => new { Order = o, States = states })
             .SelectMany(
                 x => x.States.DefaultIfEmpty(),
-                (x, s) => new { x.Id, x.Status, x.Total, x.CorrelationId, SagaState = s!.CurrentState })
+                (x, s) => new
+                {
+                    x.Order.Id,
+                    x.Order.Status,
+                    x.Order.Total,
+                    x.Order.CorrelationId,
+                    x.Order.CreatedAt,
+                    SagaState = s!.CurrentState,
+                    s.DriverName,
+                    s.EtaMinutes,
+                })
             .ToListAsync(cancellationToken);
 
         return rows
-            .Select(r => new RestaurantQueueItem(
-                r.Id,
-                r.SagaState is null ? r.Status : OrderStatusMap.FromSagaState(r.SagaState),
-                r.Total,
-                r.CorrelationId))
+            .Select(r => new LiveOrder(
+                new RestaurantQueueItem(
+                    r.Id,
+                    r.SagaState is null ? r.Status : OrderStatusMap.FromSagaState(r.SagaState),
+                    r.Total,
+                    r.CorrelationId,
+                    r.DriverName,
+                    r.EtaMinutes),
+                r.CreatedAt))
             .ToList();
     }
+
+    /// <summary>An order projected for the board, with the creation time used to order/limit the columns.</summary>
+    private sealed record LiveOrder(RestaurantQueueItem Item, DateTime CreatedAt);
 }

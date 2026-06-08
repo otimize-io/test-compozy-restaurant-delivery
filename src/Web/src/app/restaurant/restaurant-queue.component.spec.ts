@@ -33,8 +33,8 @@ class FakeHubConnection {
   }
 }
 
-function item(orderId: string, status: number): RestaurantQueueItem {
-  return { orderId, status, total: 25, correlationId: `c-${orderId}` };
+function item(orderId: string, status: number, driver?: Partial<RestaurantQueueItem>): RestaurantQueueItem {
+  return { orderId, status, total: 25, correlationId: `c-${orderId}`, ...driver };
 }
 
 describe('RestaurantQueueComponent', () => {
@@ -48,12 +48,14 @@ describe('RestaurantQueueComponent', () => {
     markOrderReady: jest.Mock;
   };
 
-  /** Builds a queue with the given orders, defaulting to one New order. */
+  /** Builds a board with the given columns, defaulting to one New order and the rest empty. */
   function queue(overrides: Partial<RestaurantQueueResponse> = {}): RestaurantQueueResponse {
     return {
       new: [item('o1', OrderStatusCode.Paid)],
-      inProgress: [],
-      ready: [],
+      cooking: [],
+      awaitingDriver: [],
+      outForDelivery: [],
+      delivered: [],
       ...overrides,
     };
   }
@@ -94,62 +96,82 @@ describe('RestaurantQueueComponent', () => {
     return Array.from(fixture.nativeElement.querySelectorAll(`[data-testid="${testid}"]`));
   }
 
-  it('renders the three columns and loads the queue from the gateway', async () => {
+  it('renders the five lifecycle columns and loads the board from the gateway', async () => {
     await create(
       queue({
         new: [item('o1', OrderStatusCode.Paid)],
-        inProgress: [item('o2', OrderStatusCode.Accepted)],
-        ready: [item('o3', OrderStatusCode.ReadyForPickup)],
+        cooking: [item('o2', OrderStatusCode.Accepted)],
+        awaitingDriver: [item('o3', OrderStatusCode.ReadyForPickup)],
+        outForDelivery: [item('o4', OrderStatusCode.PickedUp)],
+        delivered: [item('o5', OrderStatusCode.Delivered)],
       }),
     );
 
     expect(api.getRestaurantQueue).toHaveBeenCalled();
     expect(fixture.nativeElement.querySelector('[data-testid="column-new"]')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('[data-testid="column-in-progress"]')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('[data-testid="column-ready"]')).toBeTruthy();
-    expect(cards('order-card').length).toBe(3);
+    expect(fixture.nativeElement.querySelector('[data-testid="column-cooking"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('[data-testid="column-awaiting-driver"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('[data-testid="column-out-for-delivery"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('[data-testid="column-delivered"]')).toBeTruthy();
+    expect(cards('order-card').length).toBe(5);
   });
 
-  it('clicking Accept on a New order calls the accept endpoint and moves the card to In-Progress', async () => {
+  it('clicking Accept on a New order calls the accept endpoint and moves the card to Cooking', async () => {
     await create(queue({ new: [item('o1', OrderStatusCode.Paid)] }));
 
-    // After acceptance the refreshed queue returns the order in the In-Progress column.
+    // After acceptance the refreshed board returns the order in the Cooking column.
     api.getRestaurantQueue.mockReturnValue(
-      of(queue({ new: [], inProgress: [item('o1', OrderStatusCode.Accepted)] })),
+      of(queue({ new: [], cooking: [item('o1', OrderStatusCode.Accepted)] })),
     );
 
     fixture.nativeElement.querySelector('[data-testid="accept-btn"]').click();
     await flush();
 
     expect(api.acceptOrder).toHaveBeenCalledWith('o1');
-    // Two queue loads: initial + post-accept refresh.
+    // Two board loads: initial + post-accept refresh.
     expect(api.getRestaurantQueue).toHaveBeenCalledTimes(2);
 
     const newColumn = fixture.nativeElement.querySelector('[data-testid="column-new"]');
-    const inProgressColumn = fixture.nativeElement.querySelector('[data-testid="column-in-progress"]');
+    const cookingColumn = fixture.nativeElement.querySelector('[data-testid="column-cooking"]');
     expect(newColumn.querySelector('[data-testid="order-card"]')).toBeFalsy();
-    expect(inProgressColumn.querySelector('[data-testid="order-card"]')).toBeTruthy();
+    expect(cookingColumn.querySelector('[data-testid="order-card"]')).toBeTruthy();
     expect(component.queue().new.length).toBe(0);
-    expect(component.queue().inProgress.length).toBe(1);
+    expect(component.queue().cooking.length).toBe(1);
   });
 
-  it('clicking Mark ready calls the ready endpoint and moves the card to Ready', async () => {
-    await create(queue({ new: [], inProgress: [item('o2', OrderStatusCode.Preparing)] }));
+  it('clicking Mark ready calls the ready endpoint and moves the card to Awaiting driver', async () => {
+    await create(queue({ new: [], cooking: [item('o2', OrderStatusCode.Preparing)] }));
 
     api.getRestaurantQueue.mockReturnValue(
-      of(queue({ new: [], inProgress: [], ready: [item('o2', OrderStatusCode.ReadyForPickup)] })),
+      of(queue({ new: [], awaitingDriver: [item('o2', OrderStatusCode.ReadyForPickup)] })),
     );
 
     fixture.nativeElement.querySelector('[data-testid="ready-btn"]').click();
     await flush();
 
     expect(api.markOrderReady).toHaveBeenCalledWith('o2');
-    const readyColumn = fixture.nativeElement.querySelector('[data-testid="column-ready"]');
-    expect(readyColumn.querySelector('[data-testid="order-card"]')).toBeTruthy();
-    expect(component.queue().ready.length).toBe(1);
+    const column = fixture.nativeElement.querySelector('[data-testid="column-awaiting-driver"]');
+    expect(column.querySelector('[data-testid="order-card"]')).toBeTruthy();
+    expect(component.queue().awaitingDriver.length).toBe(1);
   });
 
-  it('refreshes the queue live when the shared SignalR store reports a status change', async () => {
+  it('shows the assigned driver and ETA on an awaiting-driver card', async () => {
+    await create(
+      queue({
+        new: [],
+        awaitingDriver: [
+          item('o7', OrderStatusCode.DriverAssigned, { driverName: 'Alice', etaMinutes: 7 }),
+        ],
+      }),
+    );
+
+    const line = fixture.nativeElement.querySelector('[data-testid="driver-line"]');
+    expect(line).toBeTruthy();
+    expect(line.textContent).toContain('Alice');
+    expect(line.textContent).toContain('7');
+  });
+
+  it('refreshes the board live when the shared SignalR store reports a status change', async () => {
     await create(queue({ new: [item('o1', OrderStatusCode.Paid)] }));
     expect(api.getRestaurantQueue).toHaveBeenCalledTimes(1);
     expect(component.connectionState()).toBe('connected');
@@ -166,19 +188,21 @@ describe('RestaurantQueueComponent', () => {
   });
 
   it('shows an empty state when there are no orders', async () => {
-    await create(queue({ new: [], inProgress: [], ready: [] }));
+    await create(
+      queue({ new: [], cooking: [], awaitingDriver: [], outForDelivery: [], delivered: [] }),
+    );
     expect(component.isEmpty()).toBe(true);
     expect(fixture.nativeElement.querySelector('[data-testid="empty-new"]')).toBeTruthy();
   });
 
-  it('manual refresh re-fetches the queue', async () => {
+  it('manual refresh re-fetches the board', async () => {
     await create();
     fixture.nativeElement.querySelector('[data-testid="refresh"]').click();
     await fixture.whenStable();
     expect(api.getRestaurantQueue).toHaveBeenCalledTimes(2);
   });
 
-  it('shows an error when the queue fails to load', async () => {
+  it('shows an error when the board fails to load', async () => {
     await create();
     // The next load fails; refresh is awaited directly so the catch runs in-band.
     api.getRestaurantQueue.mockReturnValue(asyncError());

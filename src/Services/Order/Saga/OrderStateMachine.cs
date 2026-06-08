@@ -60,6 +60,8 @@ public sealed class OrderStateMachine : MassTransitStateMachine<OrderState>
                     saga.RestaurantId = msg.RestaurantId;
                     saga.Total = msg.Total;
                     saga.Items = msg.Items;
+                    // Kept so OrderReady can hand it to Dispatch for nearest-driver matching + a realistic ETA.
+                    saga.RestaurantLocation = msg.RestaurantLocation;
                 })
                 .Publish(
                     context => new CapturePayment(

@@ -107,8 +107,10 @@ describe('Three live views (integration)', () => {
 
     http.expectOne(`${base}/api/restaurant/orders`).flush({
       new: [{ orderId: 'o1', status: OrderStatusCode.Paid, total: 20, correlationId: 'c1' }],
-      inProgress: [],
-      ready: [],
+      cooking: [],
+      awaitingDriver: [],
+      outForDelivery: [],
+      delivered: [],
     });
     await settle();
     expect(el('[data-testid="accept-btn"]')).toBeTruthy();
@@ -116,18 +118,20 @@ describe('Three live views (integration)', () => {
     el('[data-testid="accept-btn"]').click();
     await settle();
 
-    // The accept POST (202) fires, then the queue refreshes with the order now In-Progress.
+    // The accept POST (202) fires, then the board refreshes with the order now Cooking.
     http.expectOne(`${base}/api/orders/o1/accept`).flush(null, { status: 202, statusText: 'Accepted' });
     await settle();
     http.expectOne(`${base}/api/restaurant/orders`).flush({
       new: [],
-      inProgress: [{ orderId: 'o1', status: OrderStatusCode.Preparing, total: 20, correlationId: 'c1' }],
-      ready: [],
+      cooking: [{ orderId: 'o1', status: OrderStatusCode.Preparing, total: 20, correlationId: 'c1' }],
+      awaitingDriver: [],
+      outForDelivery: [],
+      delivered: [],
     });
     await settle();
 
-    const inProgress = el('[data-testid="column-in-progress"]');
-    expect(inProgress.querySelector('[data-testid="order-card"]')).toBeTruthy();
+    const cooking = el('[data-testid="column-cooking"]');
+    expect(cooking.querySelector('[data-testid="order-card"]')).toBeTruthy();
 
     // --- Consumer view: the same order, tracked live. ---
     await navigate(['/consumer/track', 'o1']);

@@ -63,7 +63,8 @@ public class RestaurantFlowTests : IAsyncLifetime
     /// Seeds an order row plus an EF saga-state row at the given saga state (so the endpoint guard reads it),
     /// and returns the order id. The harness saga is separately driven by published events.
     /// </summary>
-    private async Task<Guid> SeedOrderAsync(string sagaState, decimal total = 60m)
+    private async Task<Guid> SeedOrderAsync(
+        string sagaState, decimal total = 60m, string? driverName = null, int? etaMinutes = null)
     {
         var orderId = Guid.NewGuid();
         var correlationId = "corr-" + orderId.ToString("N");
@@ -86,6 +87,8 @@ public class RestaurantFlowTests : IAsyncLifetime
             CorrelationId = orderId,
             CurrentState = sagaState,
             OrderCorrelationId = correlationId,
+            DriverName = driverName,
+            EtaMinutes = etaMinutes,
         });
         await db.SaveChangesAsync();
         return orderId;
@@ -197,24 +200,36 @@ public class RestaurantFlowTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Restaurant_queue_groups_orders_into_New_InProgress_and_Ready()
+    public async Task Restaurant_board_groups_orders_through_the_full_lifecycle_with_driver_info()
     {
         var paid = await SeedOrderAsync(nameof(OrderStateMachine.Paid));
         var preparing = await SeedOrderAsync(nameof(OrderStateMachine.Preparing));
         var ready = await SeedOrderAsync(nameof(OrderStateMachine.AwaitingDriver));
-        // An order before payment and a delivered order must NOT appear in the queue.
-        var awaitingPayment = await SeedOrderAsync(nameof(OrderStateMachine.AwaitingPayment));
+        var assigned = await SeedOrderAsync(
+            nameof(OrderStateMachine.DriverAssignedState), driverName: "Alice", etaMinutes: 7);
+        var pickedUp = await SeedOrderAsync(
+            nameof(OrderStateMachine.PickedUp), driverName: "Bruno", etaMinutes: 4);
         var delivered = await SeedOrderAsync(nameof(OrderStateMachine.Delivered));
+        // An order before payment must NOT appear on the board.
+        var awaitingPayment = await SeedOrderAsync(nameof(OrderStateMachine.AwaitingPayment));
 
         var queue = await _client.GetFromJsonAsync<RestaurantQueueResponse>("/api/restaurant/orders");
 
         Assert.NotNull(queue);
         Assert.Contains(queue!.New, i => i.OrderId == paid);
-        Assert.Contains(queue.InProgress, i => i.OrderId == preparing);
-        Assert.Contains(queue.Ready, i => i.OrderId == ready);
+        Assert.Contains(queue.Cooking, i => i.OrderId == preparing);
+        Assert.Contains(queue.AwaitingDriver, i => i.OrderId == ready);
+        Assert.Contains(queue.OutForDelivery, i => i.OrderId == pickedUp);
+        Assert.Contains(queue.Delivered, i => i.OrderId == delivered);
 
-        var all = queue.New.Concat(queue.InProgress).Concat(queue.Ready).Select(i => i.OrderId).ToList();
+        // An assigned (not-yet-picked-up) order stays in AwaitingDriver and carries the matched driver + ETA.
+        var assignedItem = Assert.Single(queue.AwaitingDriver, i => i.OrderId == assigned);
+        Assert.Equal("Alice", assignedItem.DriverName);
+        Assert.Equal(7, assignedItem.EtaMinutes);
+
+        // The order before payment is not shown anywhere on the board.
+        var all = queue.New.Concat(queue.Cooking).Concat(queue.AwaitingDriver)
+            .Concat(queue.OutForDelivery).Concat(queue.Delivered).Select(i => i.OrderId).ToList();
         Assert.DoesNotContain(awaitingPayment, all);
-        Assert.DoesNotContain(delivered, all);
     }
 }

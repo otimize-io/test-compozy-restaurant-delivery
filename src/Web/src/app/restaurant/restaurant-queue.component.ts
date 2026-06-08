@@ -5,16 +5,24 @@ import { ApiService } from '../core/api.service';
 import { ORDER_STATUS_LABELS, RestaurantQueueItem, RestaurantQueueResponse } from '../core/models';
 import { QueueLiveStore } from '../core/signalr/queue-live.store';
 
-/** An empty queue used before the first load completes. */
-const EMPTY_QUEUE: RestaurantQueueResponse = { new: [], inProgress: [], ready: [] };
+/** An empty board used before the first load completes. */
+const EMPTY_QUEUE: RestaurantQueueResponse = {
+  new: [],
+  cooking: [],
+  awaitingDriver: [],
+  outForDelivery: [],
+  delivered: [],
+};
 
 /**
- * The functional-clean restaurant order queue (PRD F5 / ADR-002). It renders the three columns the
- * gateway groups orders into — New (Paid, awaiting accept), In-Progress (Accepted/Preparing), and Ready
- * (ReadyForPickup) — and exposes the two actions that advance the shared order: <b>Accept</b> on a New
- * order and <b>Mark ready</b> on an In-Progress order. Both call the gateway (202 async) and then refresh
- * the queue. A {@link QueueLiveStore} (reusing the SignalR plumbing from task_15) refreshes the queue
- * live whenever any role advances an order, so this view stays in sync with the consumer and driver views.
+ * The functional-clean restaurant order board (PRD F5 / ADR-002). It follows each order end to end across
+ * five columns — New (Paid, awaiting accept), Cooking (Accepted/Preparing), Awaiting driver (ready for
+ * pickup or a driver assigned and heading over), Out for delivery (picked up), and Delivered — and exposes
+ * the two actions the restaurant owns: <b>Accept</b> on a New order and <b>Mark ready</b> on a Cooking order.
+ * Once ready, Dispatch assigns a driver automatically and the driver does the pickup on their own screen, so
+ * the restaurant only watches from there. Both actions call the gateway (202 async) and then refresh. A
+ * {@link QueueLiveStore} (reusing the SignalR plumbing from task_15) refreshes the board live whenever any
+ * role advances an order, so this view stays in sync with the consumer and driver views.
  */
 @Component({
   selector: 'app-restaurant-queue',
@@ -40,7 +48,13 @@ export class RestaurantQueueComponent implements OnInit, OnDestroy {
   /** True when every column is empty (drives the empty-state message). */
   readonly isEmpty = computed(() => {
     const q = this.queue();
-    return q.new.length === 0 && q.inProgress.length === 0 && q.ready.length === 0;
+    return (
+      q.new.length === 0 &&
+      q.cooking.length === 0 &&
+      q.awaitingDriver.length === 0 &&
+      q.outForDelivery.length === 0 &&
+      q.delivered.length === 0
+    );
   });
 
   async ngOnInit(): Promise<void> {
@@ -73,9 +87,19 @@ export class RestaurantQueueComponent implements OnInit, OnDestroy {
     void this.act(item.orderId, () => firstValueFrom(this.api.acceptOrder(item.orderId)));
   }
 
-  /** Mark an In-Progress order ready, then refresh so it moves to the Ready column. */
+  /** Mark a Cooking order ready, then refresh so it moves to the Awaiting-driver column. */
   markReady(item: RestaurantQueueItem): void {
     void this.act(item.orderId, () => firstValueFrom(this.api.markOrderReady(item.orderId)));
+  }
+
+  /** The assigned driver line for a card ("🛵 Alice • ETA 7 min"), or null before a driver is matched. */
+  driverLine(item: RestaurantQueueItem): string | null {
+    if (!item.driverName) {
+      return null;
+    }
+    return item.etaMinutes != null
+      ? `🛵 ${item.driverName} • ETA ${item.etaMinutes} min`
+      : `🛵 ${item.driverName}`;
   }
 
   /** True while an action on this order is in flight. */
@@ -109,6 +133,12 @@ export class RestaurantQueueComponent implements OnInit, OnDestroy {
   }
 
   private allOrderIds(queue: RestaurantQueueResponse): string[] {
-    return [...queue.new, ...queue.inProgress, ...queue.ready].map((i) => i.orderId);
+    return [
+      ...queue.new,
+      ...queue.cooking,
+      ...queue.awaitingDriver,
+      ...queue.outForDelivery,
+      ...queue.delivered,
+    ].map((i) => i.orderId);
   }
 }

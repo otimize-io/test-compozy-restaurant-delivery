@@ -1,8 +1,8 @@
 <section class="container">
   <div class="queue-head">
     <div>
-      <h1>Restaurant — order queue</h1>
-      <p class="muted">Accept new orders and mark them ready for pickup.</p>
+      <h1>Restaurant — order board</h1>
+      <p class="muted">Accept new orders, cook them, then follow each one through to delivery.</p>
     </div>
     <div class="head-actions">
       <span
@@ -27,7 +27,7 @@
   }
 
   @if (loading() && isEmpty()) {
-    <p class="muted status" data-testid="queue-loading">Loading the order queue…</p>
+    <p class="muted status" data-testid="queue-loading">Loading the order board…</p>
   }
 
   <div class="board">
@@ -56,10 +56,10 @@
       }
     </section>
 
-    <!-- In-Progress (Accepted / Preparing) -->
-    <section class="column" data-testid="column-in-progress" data-column="in-progress">
-      <h2 class="column__title">In progress <span class="count">{{ queue().inProgress.length }}</span></h2>
-      @for (order of queue().inProgress; track order.orderId) {
+    <!-- Cooking (Accepted / Preparing) -->
+    <section class="column" data-testid="column-cooking" data-column="cooking">
+      <h2 class="column__title">Cooking <span class="count">{{ queue().cooking.length }}</span></h2>
+      @for (order of queue().cooking; track order.orderId) {
         <article class="order card" data-testid="order-card" [attr.data-order-id]="order.orderId">
           <div class="order__head">
             <code class="order__id">#{{ order.orderId.slice(0, 8) }}</code>
@@ -77,24 +77,71 @@
           </button>
         </article>
       } @empty {
-        <p class="muted empty" data-testid="empty-in-progress">Nothing being prepared.</p>
+        <p class="muted empty" data-testid="empty-cooking">Nothing cooking.</p>
       }
     </section>
 
-    <!-- Ready (ReadyForPickup) -->
-    <section class="column" data-testid="column-ready" data-column="ready">
-      <h2 class="column__title">Ready <span class="count">{{ queue().ready.length }}</span></h2>
-      @for (order of queue().ready; track order.orderId) {
+    <!-- Awaiting driver (ReadyForPickup / DriverAssigned) -->
+    <section class="column" data-testid="column-awaiting-driver" data-column="awaiting-driver">
+      <h2 class="column__title">
+        Awaiting driver <span class="count">{{ queue().awaitingDriver.length }}</span>
+      </h2>
+      @for (order of queue().awaitingDriver; track order.orderId) {
         <article class="order card" data-testid="order-card" [attr.data-order-id]="order.orderId">
           <div class="order__head">
             <code class="order__id">#{{ order.orderId.slice(0, 8) }}</code>
             <span class="badge badge--ok">{{ statusLabels[order.status] }}</span>
           </div>
           <p class="order__total">{{ order.total | currency }}</p>
-          <p class="muted order__hint">Awaiting driver pickup.</p>
+          @if (driverLine(order); as line) {
+            <p class="order__driver" data-testid="driver-line">{{ line }}</p>
+          } @else {
+            <p class="muted order__hint">Finding a driver…</p>
+          }
         </article>
       } @empty {
-        <p class="muted empty" data-testid="empty-ready">No orders ready.</p>
+        <p class="muted empty" data-testid="empty-awaiting-driver">No orders awaiting a driver.</p>
+      }
+    </section>
+
+    <!-- Out for delivery (PickedUp) -->
+    <section class="column" data-testid="column-out-for-delivery" data-column="out-for-delivery">
+      <h2 class="column__title">
+        Out for delivery <span class="count">{{ queue().outForDelivery.length }}</span>
+      </h2>
+      @for (order of queue().outForDelivery; track order.orderId) {
+        <article class="order card" data-testid="order-card" [attr.data-order-id]="order.orderId">
+          <div class="order__head">
+            <code class="order__id">#{{ order.orderId.slice(0, 8) }}</code>
+            <span class="badge badge--ok">{{ statusLabels[order.status] }}</span>
+          </div>
+          <p class="order__total">{{ order.total | currency }}</p>
+          @if (driverLine(order); as line) {
+            <p class="order__driver" data-testid="driver-line">{{ line }}</p>
+          }
+          <p class="muted order__hint">On the way to the customer.</p>
+        </article>
+      } @empty {
+        <p class="muted empty" data-testid="empty-out-for-delivery">Nothing out for delivery.</p>
+      }
+    </section>
+
+    <!-- Delivered (recent) -->
+    <section class="column" data-testid="column-delivered" data-column="delivered">
+      <h2 class="column__title">Delivered <span class="count">{{ queue().delivered.length }}</span></h2>
+      @for (order of queue().delivered; track order.orderId) {
+        <article class="order card order--done" data-testid="order-card" [attr.data-order-id]="order.orderId">
+          <div class="order__head">
+            <code class="order__id">#{{ order.orderId.slice(0, 8) }}</code>
+            <span class="badge badge--done">{{ statusLabels[order.status] }}</span>
+          </div>
+          <p class="order__total">{{ order.total | currency }}</p>
+          @if (driverLine(order); as line) {
+            <p class="order__driver" data-testid="driver-line">{{ line }}</p>
+          }
+        </article>
+      } @empty {
+        <p class="muted empty" data-testid="empty-delivered">No recent deliveries.</p>
       }
     </section>
   </div>

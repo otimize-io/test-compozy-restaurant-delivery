@@ -28,6 +28,9 @@ public sealed class OrderService(OrderDbContext db, IPublishEndpoint publishEndp
             .Select(i => new OrderLine(i.ItemId, i.Name, i.Quantity, i.UnitPrice))
             .ToList();
         var total = items.Sum(i => i.UnitPrice * i.Quantity);
+        var restaurantLocation = request.RestaurantLocation is { } location
+            ? new GeoPoint(location.Lat, location.Lng)
+            : default;
 
         var order = new OrderEntity
         {
@@ -44,7 +47,9 @@ public sealed class OrderService(OrderDbContext db, IPublishEndpoint publishEndp
 
         db.Orders.Add(order);
         await publishEndpoint.Publish(
-            new OrderPlaced(orderId, correlationId, request.ConsumerId, request.RestaurantId, total, items),
+            new OrderPlaced(
+                orderId, correlationId, request.ConsumerId, request.RestaurantId, total, items,
+                restaurantLocation),
             cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
 
