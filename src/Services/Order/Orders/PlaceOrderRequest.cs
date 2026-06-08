@@ -26,3 +26,16 @@ public sealed record OrderStatusResponse(
     OrderStatus Status,
     decimal Total,
     string CorrelationId);
+
+/// <summary>
+/// A row in the consumer's order-tracking area (<c>GET /api/consumer/orders/{consumerId}</c>): one of the
+/// consumer's orders with its live (saga-derived) status and, once a driver is assigned, the driver and ETA.
+/// </summary>
+public sealed record ConsumerOrderItem(
+    Guid OrderId,
+    OrderStatus Status,
+    decimal Total,
+    Guid RestaurantId,
+    DateTime CreatedAt,
+    string? DriverName,
+    int? EtaMinutes);

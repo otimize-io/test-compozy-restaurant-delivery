@@ -120,6 +120,18 @@ describe('ApiService', () => {
     expect(result).toEqual(queue);
   });
 
+  it('getConsumerOrders hits the consumer orders endpoint and returns the list', () => {
+    const orders = [
+      { orderId: 'o1', status: 2, total: 19, restaurantId: 'r1', createdAt: '2026-06-08T12:00:00Z' },
+    ];
+    let result: unknown;
+    api.getConsumerOrders('cid-1').subscribe((r) => (result = r));
+    const req = http.expectOne(`${base}/api/consumer/orders/cid-1`);
+    expect(req.request.method).toBe('GET');
+    req.flush(orders);
+    expect(result).toEqual(orders);
+  });
+
   it('acceptOrder POSTs to the accept endpoint (202 async)', () => {
     api.acceptOrder('o1').subscribe();
     const req = http.expectOne(`${base}/api/orders/o1/accept`);

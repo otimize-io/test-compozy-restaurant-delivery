@@ -1,0 +1,70 @@
+<section class="container">
+  <div class="orders-head">
+    <div>
+      <h1>My orders</h1>
+      <p class="muted">Track your orders live, from the kitchen to your door.</p>
+    </div>
+    <div class="head-actions">
+      <span
+        class="conn"
+        [class.conn--live]="connectionState() === 'connected'"
+        [attr.data-state]="connectionState()"
+        data-testid="conn-state"
+      >
+        @switch (connectionState()) {
+          @case ('connected') { ● Live }
+          @case ('connecting') { ◌ Connecting… }
+          @case ('reconnecting') { ◌ Reconnecting… }
+          @default { ○ Offline }
+        }
+      </span>
+      <button type="button" class="btn" data-testid="refresh" (click)="refresh()">Refresh</button>
+    </div>
+  </div>
+
+  @if (error()) {
+    <p class="error card" data-testid="orders-error">{{ error() }}</p>
+  }
+
+  @if (loading() && isEmpty()) {
+    <p class="muted status" data-testid="orders-loading">Loading your orders…</p>
+  }
+
+  @if (!loading() && isEmpty()) {
+    <p class="muted empty card" data-testid="orders-empty">
+      You have no orders yet. <a routerLink="/consumer">Find something to eat →</a>
+    </p>
+  }
+
+  <ul class="orders" role="list">
+    @for (order of orders(); track order.orderId) {
+      <li
+        class="order card"
+        [class.order--done]="isDone(order.status)"
+        data-testid="order-row"
+        [attr.data-order-id]="order.orderId"
+      >
+        <div class="order__main">
+          <div class="order__head">
+            <code class="order__id">#{{ order.orderId.slice(0, 8) }}</code>
+            <span class="badge" data-testid="order-status">{{ statusLabels[order.status] }}</span>
+          </div>
+          <p class="order__meta">
+            <span class="order__total">{{ order.total | currency }}</span>
+            <span class="muted">· {{ order.createdAt | date: 'short' }}</span>
+          </p>
+          @if (driverLine(order); as line) {
+            <p class="order__driver" data-testid="driver-line">{{ line }}</p>
+          }
+        </div>
+        <a
+          class="btn btn-primary"
+          [routerLink]="['/consumer/track', order.orderId]"
+          data-testid="track-link"
+        >
+          Track
+        </a>
+      </li>
+    }
+  </ul>
+</section>

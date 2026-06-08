@@ -23,13 +23,16 @@
   </nav>
 
   @if (isConsumer()) {
-    <a class="cart-pill" routerLink="/consumer/cart" aria-label="Open cart">
-      🛒
-      @if (cartCount() > 0) {
-        <span class="cart-pill__count" data-testid="cart-count">{{ cartCount() }}</span>
-        <span class="cart-pill__total">{{ cartTotal() | currency }}</span>
-      }
-    </a>
+    <div class="consumer-actions">
+      <a class="nav-link" routerLink="/consumer/orders" data-testid="my-orders-link">My orders</a>
+      <a class="cart-pill" routerLink="/consumer/cart" aria-label="Open cart">
+        🛒
+        @if (cartCount() > 0) {
+          <span class="cart-pill__count" data-testid="cart-count">{{ cartCount() }}</span>
+          <span class="cart-pill__total">{{ cartTotal() | currency }}</span>
+        }
+      </a>
+    </div>
   }
 </header>
 

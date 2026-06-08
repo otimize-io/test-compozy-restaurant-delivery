@@ -81,4 +81,49 @@ public sealed class OrderService(OrderDbContext db, IPublishEndpoint publishEndp
         var status = sagaState is null ? order.Status : OrderStatusMap.FromSagaState(sagaState);
         return new OrderStatusResponse(order.Id, status, order.Total, order.CorrelationId);
     }
+
+    /// <summary>
+    /// Returns the consumer's orders, most recent first, each with the live (saga-derived) status and — once
+    /// Dispatch has matched one — the assigned driver and ETA. This is the read behind the consumer's
+    /// order-tracking area (<c>GET /api/consumer/orders/{consumerId}</c>); the live status falls back to the
+    /// persisted snapshot before the saga has recorded a state.
+    /// </summary>
+    public async Task<IReadOnlyList<ConsumerOrderItem>> GetConsumerOrdersAsync(
+        Guid consumerId, CancellationToken cancellationToken = default)
+    {
+        var rows = await db.Orders
+            .AsNoTracking()
+            .Where(o => o.ConsumerId == consumerId)
+            .GroupJoin(
+                db.Set<OrderState>().AsNoTracking(),
+                o => o.Id,
+                s => s.CorrelationId,
+                (o, states) => new { Order = o, States = states })
+            .SelectMany(
+                x => x.States.DefaultIfEmpty(),
+                (x, s) => new
+                {
+                    x.Order.Id,
+                    x.Order.Status,
+                    x.Order.Total,
+                    x.Order.RestaurantId,
+                    x.Order.CreatedAt,
+                    SagaState = s!.CurrentState,
+                    s.DriverName,
+                    s.EtaMinutes,
+                })
+            .ToListAsync(cancellationToken);
+
+        return rows
+            .OrderByDescending(r => r.CreatedAt)
+            .Select(r => new ConsumerOrderItem(
+                r.Id,
+                r.SagaState is null ? r.Status : OrderStatusMap.FromSagaState(r.SagaState),
+                r.Total,
+                r.RestaurantId,
+                r.CreatedAt,
+                r.DriverName,
+                r.EtaMinutes))
+            .ToList();
+    }
 }

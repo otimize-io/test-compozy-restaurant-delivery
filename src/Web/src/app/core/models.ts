@@ -163,6 +163,20 @@ export interface RestaurantQueueResponse {
   delivered: RestaurantQueueItem[];
 }
 
+/**
+ * A row in the consumer's order-tracking area (`GET /api/consumer/orders/{consumerId}`): one of the
+ * consumer's orders with its live status and, once a driver is assigned, the driver and ETA.
+ */
+export interface ConsumerOrderItem {
+  orderId: string;
+  status: number;
+  total: number;
+  restaurantId: string;
+  createdAt: string;
+  driverName?: string | null;
+  etaMinutes?: number | null;
+}
+
 /** A driver assignment row (`GET /api/driver/assignments`): an assigned, not-yet-delivered order. */
 export interface DriverAssignmentItem {
   orderId: string;

@@ -104,6 +104,69 @@ public class OrderServiceTests
     }
 
     [Fact]
+    public async Task GetConsumerOrdersAsync_lists_only_that_consumers_orders_newest_first_with_live_status()
+    {
+        var (harness, hp) = await StartHarnessAsync();
+        await using var _ = hp;
+        await using var db = NewDbContext(
+            nameof(GetConsumerOrdersAsync_lists_only_that_consumers_orders_newest_first_with_live_status));
+        var service = new OrderService(db, harness.Bus);
+
+        var consumer = Guid.NewGuid();
+        var other = Guid.NewGuid();
+        var older = await SeedOrderAsync(db, consumer, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            nameof(OrderStateMachine.Paid));
+        var newer = await SeedOrderAsync(db, consumer, new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Utc),
+            nameof(OrderStateMachine.DriverAssignedState), driverName: "Alice", eta: 6);
+        var foreign = await SeedOrderAsync(db, other, new DateTime(2026, 1, 3, 0, 0, 0, DateTimeKind.Utc),
+            nameof(OrderStateMachine.Paid));
+
+        var orders = await service.GetConsumerOrdersAsync(consumer);
+
+        // Only the consumer's two orders, the other consumer's order excluded, newest first.
+        Assert.Equal(2, orders.Count);
+        Assert.DoesNotContain(orders, o => o.OrderId == foreign);
+        Assert.Equal(newer, orders[0].OrderId);
+        Assert.Equal(older, orders[1].OrderId);
+
+        // The live saga status is mapped, and a driver-assigned order carries the driver + ETA.
+        Assert.Equal(OrderStatus.DriverAssigned, orders[0].Status);
+        Assert.Equal("Alice", orders[0].DriverName);
+        Assert.Equal(6, orders[0].EtaMinutes);
+        Assert.Equal(OrderStatus.Paid, orders[1].Status);
+    }
+
+    private static async Task<Guid> SeedOrderAsync(
+        OrderDbContext db, Guid consumerId, DateTime createdAt, string sagaState,
+        string? driverName = null, int? eta = null)
+    {
+        var orderId = Guid.NewGuid();
+        var correlationId = "corr-" + orderId.ToString("N");
+        db.Orders.Add(new OrderEntity
+        {
+            Id = orderId,
+            ConsumerId = consumerId,
+            RestaurantId = Guid.NewGuid(),
+            Total = 42m,
+            CorrelationId = correlationId,
+            Status = OrderStatus.Placed,
+            CreatedAt = createdAt,
+            UpdatedAt = createdAt,
+            Items = [],
+        });
+        db.Set<OrderState>().Add(new OrderState
+        {
+            CorrelationId = orderId,
+            CurrentState = sagaState,
+            OrderCorrelationId = correlationId,
+            DriverName = driverName,
+            EtaMinutes = eta,
+        });
+        await db.SaveChangesAsync();
+        return orderId;
+    }
+
+    [Fact]
     public async Task GetStatusAsync_maps_the_live_saga_state_to_an_OrderStatus()
     {
         var (harness, hp) = await StartHarnessAsync();

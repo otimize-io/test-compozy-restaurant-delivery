@@ -45,6 +45,16 @@ public static class OrderEndpoints
             return status is null ? Results.NotFound() : Results.Ok(status);
         });
 
+        // The consumer's order-tracking area: their orders (most recent first) with the live saga status.
+        endpoints.MapGet("/api/consumer/orders/{consumerId:guid}", async (
+            Guid consumerId,
+            OrderService orders,
+            CancellationToken cancellationToken) =>
+        {
+            var list = await orders.GetConsumerOrdersAsync(consumerId, cancellationToken);
+            return Results.Ok(list);
+        });
+
         return endpoints;
     }
 }

@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
+  ConsumerOrderItem,
   DemoIdentity,
   DriverAssignmentItem,
   MenuItem,
@@ -66,6 +67,11 @@ export class ApiService {
   /** `GET /api/orders/{id}/status` — the 5-stage tracking view; used to resync on (re)connect (ADR-007). */
   getOrderStatus(orderId: string): Observable<OrderStatus> {
     return this.http.get<OrderStatus>(`${this.base}/api/orders/${orderId}/status`);
+  }
+
+  /** `GET /api/consumer/orders/{consumerId}` — the consumer's orders for the tracking area (PRD F8). */
+  getConsumerOrders(consumerId: string): Observable<ConsumerOrderItem[]> {
+    return this.http.get<ConsumerOrderItem[]>(`${this.base}/api/consumer/orders/${consumerId}`);
   }
 
   /** `GET /api/restaurant/orders` — the restaurant order queue grouped New/In-Progress/Ready (PRD F5). */
