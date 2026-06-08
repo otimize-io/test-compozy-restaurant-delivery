@@ -18,6 +18,10 @@ builder.Services.AddSingleton<IRestaurantStore, MongoRestaurantStore>();
 // Seeds mock restaurants/menus at startup and publishes one RestaurantPublished each for Search (ADR-004).
 builder.Services.AddHostedService<RestaurantSeeder>();
 
+// Re-publishes the seeded catalog a few times after startup so Search indexes it even if it bound its
+// RestaurantPublished queue after the seeder's first publish (the consumer-bind race). Bounded; idempotent.
+builder.Services.AddHostedService<RestaurantRepublisher>();
+
 builder.Services.AddPlatformMessaging(
     builder.Configuration.GetConnectionString("RabbitMq")
         ?? "rabbitmq://localhost");

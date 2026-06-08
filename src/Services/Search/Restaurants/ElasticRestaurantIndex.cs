@@ -49,7 +49,14 @@ public sealed class ElasticRestaurantIndex : IRestaurantIndex
 
         var response = await _client.SearchAsync<IndexedRestaurant>(request, cancellationToken);
 
-        // A failed/empty search yields no documents → an empty list, so callers never see an error.
+        // The index may not exist yet (nothing indexed before the first restaurant is published). That is
+        // not an error — it just means no results. Guard the invalid response so a read never throws / 500
+        // (response.Documents is null on a failed response, e.g. index_not_found).
+        if (!response.IsValidResponse)
+        {
+            return [];
+        }
+
         return response.Documents.ToList();
     }
 }

@@ -79,6 +79,18 @@ public class SearchElasticsearchIntegrationTests : IAsyncLifetime
         Assert.Empty(await index.SearchAsync("Vegan"));
     }
 
+    [Fact]
+    public async Task Searching_before_anything_is_indexed_returns_empty_not_an_error()
+    {
+        // Reproduces the reported gateway 500: before any restaurant is published the `restaurants` index
+        // does not exist, so ES answers with an invalid response (index_not_found). The index must treat that
+        // as "no results" rather than dereferencing a null document set (which surfaced as a 500 / NRE).
+        var index = new ElasticRestaurantIndex(_client);
+
+        Assert.Empty(await index.SearchAsync("pizza"));  // term query against a missing index
+        Assert.Empty(await index.SearchAsync(null));     // browse (match-all) against a missing index
+    }
+
     private static async Task<IReadOnlyList<IndexedRestaurant>> SearchUntilFoundAsync(
         IRestaurantIndex index, string query, Guid expectedId)
     {
