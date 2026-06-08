@@ -132,6 +132,36 @@ public sealed class GatewayHttpTests(StackFixture stack)
         Assert.Equal(2, stage);
     }
 
+    [Fact]
+    public async Task Cors_preflight_from_the_spa_origin_is_allowed_on_a_proxied_route()
+    {
+        // A browser preflight (OPTIONS) from the SPA origin to a YARP-proxied route must be answered at the
+        // gateway with the matching Access-Control-Allow-Origin — otherwise the SPA gets a CORS error.
+        await using var hosted = await HostedStack.StartAsync(stack);
+        using var preflight = new HttpRequestMessage(HttpMethod.Options, $"/api/orders/{Guid.NewGuid()}/status");
+        preflight.Headers.Add("Origin", "http://localhost:4200");
+        preflight.Headers.Add("Access-Control-Request-Method", "GET");
+
+        var response = await hosted.Client.SendAsync(preflight);
+
+        Assert.True(response.Headers.TryGetValues("Access-Control-Allow-Origin", out var allowOrigin));
+        Assert.Contains("http://localhost:4200", allowOrigin!);
+    }
+
+    [Fact]
+    public async Task Cross_origin_request_from_the_spa_returns_the_allow_origin_header()
+    {
+        await using var hosted = await HostedStack.StartAsync(stack);
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/demo/roles");
+        request.Headers.Add("Origin", "http://localhost:4200");
+
+        var response = await hosted.Client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Headers.TryGetValues("Access-Control-Allow-Origin", out var allowOrigin));
+        Assert.Contains("http://localhost:4200", allowOrigin!);
+    }
+
     private static async Task WaitUntilStatusAsync(HttpClient client, Guid orderId, string expected)
     {
         var expectedValue = OrderStatusValues.Of(expected);

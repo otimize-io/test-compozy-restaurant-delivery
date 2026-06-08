@@ -37,9 +37,25 @@ builder.Services.AddPlatformMessaging(
 builder.Services.AddPlatformCore();
 builder.Services.AddPlatformHealthChecks();
 
+// CORS for the browser SPA, which is served from a different origin (e.g. http://localhost:4200) than the
+// gateway (http://localhost:8080). The SignalR hub needs AllowCredentials, which forbids a wildcard origin,
+// so the allowed origins are explicit (configurable via Cors:AllowedOrigins).
+const string SpaCorsPolicy = "spa";
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? ["http://localhost:4200"];
+builder.Services.AddCors(options => options.AddPolicy(SpaCorsPolicy, policy => policy
+    .WithOrigins(allowedOrigins)
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .AllowCredentials()));
+
 var app = builder.Build();
 
 app.UsePlatform();
+
+// Apply CORS before the endpoints (minimal APIs, the SignalR hub, and the YARP-proxied routes) so the
+// browser's preflight is answered at the gateway and every response carries the CORS headers.
+app.UseCors(SpaCorsPolicy);
 
 // The role switcher runs before routing so the demo identity is attached to the request and forwarded to
 // upstream services (ADR-002). It never fails the request when the role is missing/unknown.
