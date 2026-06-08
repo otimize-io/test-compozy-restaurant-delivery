@@ -24,4 +24,15 @@ public sealed class PaymentOptions
 
     /// <summary>Reason text attached to a <c>PaymentDeclined</c> event.</summary>
     public string DeclineReason { get; init; } = "Declined by mock payment provider.";
+
+    /// <summary>
+    /// How long <c>POST /api/payments/callback</c> waits for an in-flight capture to be persisted before
+    /// returning 404. The SPA settles immediately after placing the order, so the settlement can arrive
+    /// before <c>CapturePayment</c> has been consumed and the record written (the capture race). Default 5s;
+    /// <see cref="TimeSpan.Zero"/> disables the wait (returns 404 on the first miss).
+    /// </summary>
+    public TimeSpan CaptureWaitTimeout { get; init; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>Re-check interval while the callback waits for the capture (see <see cref="CaptureWaitTimeout"/>).</summary>
+    public TimeSpan CaptureWaitInterval { get; init; } = TimeSpan.FromMilliseconds(200);
 }

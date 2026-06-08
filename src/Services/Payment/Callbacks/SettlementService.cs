@@ -29,6 +29,36 @@ public enum SettlementResult
 /// </summary>
 public sealed class SettlementService(IPaymentStore store, IPublishEndpoint publishEndpoint)
 {
+    /// <summary>
+    /// Settles like <see cref="SettleAsync"/>, but tolerates the capture race: the SPA posts the settlement
+    /// immediately after placing the order, so it can arrive before <c>CapturePayment</c> has been consumed
+    /// and the record written. When the first attempt finds no record, it re-checks every
+    /// <paramref name="interval"/> up to <paramref name="timeout"/> before giving up with
+    /// <see cref="SettlementResult.NotFound"/>. Any non-NotFound outcome returns immediately.
+    /// </summary>
+    public async Task<SettlementResult> SettleWaitingForCaptureAsync(
+        SettlementCallbackRequest request,
+        TimeSpan timeout,
+        TimeSpan interval,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await SettleAsync(request, cancellationToken);
+        if (result != SettlementResult.NotFound || timeout <= TimeSpan.Zero || interval <= TimeSpan.Zero)
+        {
+            return result;
+        }
+
+        var waited = TimeSpan.Zero;
+        while (result == SettlementResult.NotFound && waited < timeout)
+        {
+            await Task.Delay(interval, cancellationToken);
+            waited += interval;
+            result = await SettleAsync(request, cancellationToken);
+        }
+
+        return result;
+    }
+
     public async Task<SettlementResult> SettleAsync(
         SettlementCallbackRequest request, CancellationToken cancellationToken = default)
     {
