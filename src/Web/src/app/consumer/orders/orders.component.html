@@ -53,17 +53,32 @@
             <span class="order__total">{{ order.total | currency }}</span>
             <span class="muted">· {{ order.createdAt | date: 'short' }}</span>
           </p>
+          @if (isAwaitingPayment(order.status)) {
+            <p class="order__hint muted" data-testid="pay-hint">Payment pending — pay to start your order.</p>
+          }
           @if (driverLine(order); as line) {
             <p class="order__driver" data-testid="driver-line">{{ line }}</p>
           }
         </div>
-        <a
-          class="btn btn-primary"
-          [routerLink]="['/consumer/track', order.orderId]"
-          data-testid="track-link"
-        >
-          Track
-        </a>
+        @if (isAwaitingPayment(order.status)) {
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-testid="pay-btn"
+            [disabled]="isPending(order.orderId)"
+            (click)="pay(order)"
+          >
+            Pay now
+          </button>
+        } @else {
+          <a
+            class="btn btn-primary"
+            [routerLink]="['/consumer/track', order.orderId]"
+            data-testid="track-link"
+          >
+            Track
+          </a>
+        }
       </li>
     }
   </ul>

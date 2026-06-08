@@ -50,13 +50,14 @@ describe('OrdersComponent', () => {
   let fixture: ComponentFixture<OrdersComponent>;
   let component: OrdersComponent;
   let fake: FakeHubConnection;
-  let api: { base: string; getConsumerOrders: jest.Mock };
+  let api: { base: string; getConsumerOrders: jest.Mock; settlePayment: jest.Mock };
 
   async function create(initial: ConsumerOrderItem[] = [order('o1', OrderStatusCode.Paid)]): Promise<void> {
     fake = new FakeHubConnection();
     api = {
       base: 'http://gw',
       getConsumerOrders: jest.fn().mockReturnValue(of(initial)),
+      settlePayment: jest.fn().mockReturnValue(of(undefined)),
     };
     TestBed.configureTestingModule({
       imports: [OrdersComponent],
@@ -120,6 +121,22 @@ describe('OrdersComponent', () => {
 
     expect(api.getConsumerOrders).toHaveBeenCalledTimes(2);
     expect(component.orders()[0].status).toBe(OrderStatusCode.Preparing);
+  });
+
+  it('shows Pay now on an awaiting-payment order and paying settles then refreshes to Paid', async () => {
+    await create([order('o5', OrderStatusCode.AwaitingPayment)]);
+
+    const payBtn = fixture.nativeElement.querySelector('[data-testid="pay-btn"]');
+    expect(payBtn).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('[data-testid="track-link"]')).toBeFalsy();
+
+    // After paying, the refreshed list returns the order as Paid.
+    api.getConsumerOrders.mockReturnValue(of([order('o5', OrderStatusCode.Paid)]));
+    payBtn.click();
+    await flush();
+
+    expect(api.settlePayment).toHaveBeenCalledWith({ orderId: 'o5', outcome: 'settle' });
+    expect(component.orders()[0].status).toBe(OrderStatusCode.Paid);
   });
 
   it('shows an empty state when the consumer has no orders', async () => {

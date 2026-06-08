@@ -29,6 +29,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
   readonly orders = signal<ConsumerOrderItem[]>([]);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+  /** Order ids with a pay action in flight, so their button disables until the refresh completes. */
+  readonly pending = signal<ReadonlySet<string>>(new Set());
 
   readonly connectionState = this.live.connectionState;
   readonly statusLabels = ORDER_STATUS_LABELS;
@@ -57,6 +59,43 @@ export class OrdersComponent implements OnInit, OnDestroy {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  /** True while an order still needs payment (its checkout settle did not complete). */
+  isAwaitingPayment(status: number): boolean {
+    return status === OrderStatusCode.AwaitingPayment;
+  }
+
+  /** True while a pay action on this order is in flight. */
+  isPending(orderId: string): boolean {
+    return this.pending().has(orderId);
+  }
+
+  /** Settle the mock payment for an order stuck at Awaiting payment, then refresh so it moves to Paid. */
+  async pay(order: ConsumerOrderItem): Promise<void> {
+    if (this.isPending(order.orderId)) {
+      return;
+    }
+    this.setPending(order.orderId, true);
+    this.error.set(null);
+    try {
+      await firstValueFrom(this.api.settlePayment({ orderId: order.orderId, outcome: 'settle' }));
+      await this.refresh();
+    } catch {
+      this.error.set('We could not complete the payment. Please try again.');
+    } finally {
+      this.setPending(order.orderId, false);
+    }
+  }
+
+  private setPending(orderId: string, on: boolean): void {
+    const next = new Set(this.pending());
+    if (on) {
+      next.add(orderId);
+    } else {
+      next.delete(orderId);
+    }
+    this.pending.set(next);
   }
 
   /** The assigned driver line for an order ("🛵 Alice • ETA 7 min"), or null before a driver is matched. */
